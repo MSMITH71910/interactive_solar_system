@@ -405,6 +405,40 @@
       }
     }
     
+    /* Loading indicator for mobile */
+    #mobileLoadingIndicator {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(0,0,0,0.9);
+      color: white;
+      padding: 20px;
+      border-radius: 10px;
+      text-align: center;
+      z-index: 10000;
+      display: none;
+    }
+    
+    #mobileLoadingIndicator.show {
+      display: block;
+    }
+    
+    .loading-spinner {
+      border: 3px solid #333;
+      border-top: 3px solid #4CAF50;
+      border-radius: 50%;
+      width: 30px;
+      height: 30px;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 10px;
+    }
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    
     /* Touch-friendly improvements */
     @media (hover: none) and (pointer: coarse) {
       .planet-button {
@@ -435,6 +469,13 @@
   </style>
 </head>
 <body>
+<!-- Mobile Loading Indicator -->
+<div id="mobileLoadingIndicator">
+  <div class="loading-spinner"></div>
+  <div>Loading Solar System...</div>
+  <div style="font-size: 12px; margin-top: 10px; color: #888;">Optimizing for mobile</div>
+</div>
+
 <div id="controlPanel">
   <h3>🌌 Solar System Controls</h3>
   
@@ -536,6 +577,10 @@
   const isTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
   
   if (isMobile || isTouch) {
+    // Show mobile loading indicator
+    const loadingIndicator = document.getElementById('mobileLoadingIndicator');
+    loadingIndicator.classList.add('show');
+    
     // Enable touch controls
     controls.enableDamping = true;
     controls.dampingFactor = 0.1;
@@ -558,6 +603,11 @@
     if (window.innerWidth < 768) {
       controlPanel.classList.add('collapsed');
     }
+    
+    // Hide loading indicator after everything is loaded
+    setTimeout(() => {
+      loadingIndicator.classList.remove('show');
+    }, 2000);
     
     console.log('Mobile optimizations enabled');
   }
