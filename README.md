@@ -4,7 +4,7 @@ An immersive, educational 3D solar system simulation built with Three.js, featur
 
 ## 🚀 Live Demo
 
-Visit the live application: [Interactive Solar System](https://your-netlify-url.netlify.app)
+Visit the live application: [Interactive Solar System](https://educationalinteractivesolarsystem.netlify.app/)
 
 ## ✨ Features
 
