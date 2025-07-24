@@ -1,0 +1,1906 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Explore our solar system in 3D! Interactive educational simulation featuring all planets, Halley's Comet, realistic orbital mechanics, and an AI chatbot guide. Perfect for astronomy education." />
+  <meta name="keywords" content="solar system, planets, astronomy, education, 3D simulation, Three.js, interactive, space, Halley's comet, educational tool" />
+  <meta name="author" content="MSMITH71910" />
+  <meta name="robots" content="index, follow" />
+  
+  <!-- Open Graph / Facebook -->
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="Interactive Solar System - 3D Educational Simulation" />
+  <meta property="og:description" content="Explore our solar system in 3D! Interactive educational simulation featuring all planets, Halley's Comet, realistic orbital mechanics, and an AI chatbot guide." />
+  <meta property="og:url" content="https://your-netlify-url.netlify.app" />
+  <meta property="og:site_name" content="Interactive Solar System" />
+  
+  <!-- Twitter -->
+  <meta property="twitter:card" content="summary_large_image" />
+  <meta property="twitter:title" content="Interactive Solar System - 3D Educational Simulation" />
+  <meta property="twitter:description" content="Explore our solar system in 3D! Interactive educational simulation featuring all planets, Halley's Comet, realistic orbital mechanics, and an AI chatbot guide." />
+  
+  <!-- Favicon -->
+  <link rel="icon" type="image/x-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌌</text></svg>" />
+  
+  <title>Interactive Solar System - 3D Educational Simulation</title>
+  <style>
+    body, html {
+      margin: 0; padding: 0; overflow: hidden; font-family: Arial, sans-serif;
+      background-color: black;
+      color: white;
+    }
+    #infoBox {
+      position: fixed;
+      top: 10px; left: 320px; /* Moved to right of control panel */
+      background: rgba(0,0,0,0.8);
+      padding: 15px;
+      max-width: 300px;
+      border: 1px solid #333;
+      border-radius: 8px;
+      font-size: 14px;
+      pointer-events: none;
+      z-index: 1000;
+    }
+    #timeDisplay {
+      position: fixed;
+      top: 10px; right: 10px;
+      background: rgba(0,0,0,0.7);
+      padding: 10px;
+      border-radius: 5px;
+      font-size: 12px;
+      color: #00ff00;
+      font-family: monospace;
+    }
+    #controlPanel {
+      position: fixed;
+      left: 10px; top: 10px;
+      width: 280px;
+      background: rgba(0,0,0,0.8);
+      border: 1px solid #333;
+      border-radius: 8px;
+      padding: 15px;
+      color: white;
+      font-family: Arial, sans-serif;
+      font-size: 14px;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+    #controlPanel h3 {
+      margin: 0 0 10px 0;
+      color: #4CAF50;
+      border-bottom: 1px solid #333;
+      padding-bottom: 5px;
+    }
+    #speedControl {
+      margin: 10px 0;
+    }
+    #speedSlider {
+      width: 100%;
+      margin: 5px 0;
+      height: 20px;
+      background: #333;
+      outline: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    #speedSlider::-webkit-slider-thumb {
+      appearance: none;
+      width: 20px;
+      height: 20px;
+      background: #4CAF50;
+      border-radius: 50%;
+      cursor: pointer;
+    }
+    #speedSlider::-moz-range-thumb {
+      width: 20px;
+      height: 20px;
+      background: #4CAF50;
+      border-radius: 50%;
+      cursor: pointer;
+      border: none;
+    }
+    #planetList {
+      margin-top: 15px;
+    }
+    .planet-button {
+      display: block;
+      width: 100%;
+      padding: 8px;
+      margin: 3px 0;
+      background: rgba(255,255,255,0.1);
+      border: 1px solid #555;
+      border-radius: 4px;
+      color: white;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    .planet-button:hover {
+      background: rgba(255,255,255,0.2);
+    }
+    .planet-button.active {
+      background: rgba(76, 175, 80, 0.3);
+      border-color: #4CAF50;
+    }
+    #planetView {
+      position: fixed;
+      right: 10px; bottom: 10px;
+      width: 300px;
+      height: 200px;
+      background: rgba(0,0,0,0.9);
+      border: 1px solid #333;
+      border-radius: 8px;
+      padding: 15px;
+      color: white;
+      display: none;
+    }
+    #planetView h2 {
+      margin: 0 0 10px 0;
+      color: #4CAF50;
+    }
+    #closeView {
+      position: absolute;
+      top: 5px; right: 10px;
+      background: none;
+      border: none;
+      color: #ff6b6b;
+      font-size: 18px;
+      cursor: pointer;
+    }
+    #chatbot {
+      position: fixed;
+      bottom: 10px; left: 10px;
+      width: 350px;
+      height: 300px;
+      background: rgba(0,0,0,0.9);
+      border: 1px solid #333;
+      border-radius: 8px;
+      display: flex;
+      flex-direction: column;
+      color: white;
+      font-family: Arial, sans-serif;
+      z-index: 1000;
+      pointer-events: auto;
+      transition: all 0.3s ease;
+      resize: both;
+      overflow: hidden;
+      min-width: 300px;
+      min-height: 200px;
+      max-width: 80vw;
+      max-height: 80vh;
+    }
+    #chatbot.maximized {
+      width: 80vw;
+      height: 80vh;
+      bottom: 10vh;
+      left: 10vw;
+    }
+    #chatbot.minimized {
+      height: 40px;
+    }
+    #chatHeader {
+      background: rgba(76, 175, 80, 0.8);
+      padding: 10px;
+      border-radius: 8px 8px 0 0;
+      font-weight: bold;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    #chatMessages {
+      flex: 1;
+      padding: 10px;
+      overflow-y: auto;
+      font-size: 13px;
+      line-height: 1.4;
+      user-select: text;
+      -webkit-user-select: text;
+      -moz-user-select: text;
+      -ms-user-select: text;
+    }
+    #chatInput {
+      display: flex;
+      padding: 10px;
+      border-top: 1px solid #333;
+    }
+    #chatTextInput {
+      flex: 1;
+      padding: 8px;
+      border: 1px solid #555;
+      border-radius: 4px;
+      background: rgba(255,255,255,0.1);
+      color: white;
+      font-size: 13px;
+      outline: none;
+      pointer-events: auto;
+      z-index: 1001;
+    }
+    #chatTextInput:focus {
+      border-color: #4CAF50;
+      background: rgba(255,255,255,0.2);
+    }
+    #chatSend {
+      margin-left: 5px;
+      padding: 8px 12px;
+      background: #4CAF50;
+      border: none;
+      border-radius: 4px;
+      color: white;
+      cursor: pointer;
+      font-size: 13px;
+    }
+    #chatSend:hover {
+      background: #45a049;
+    }
+    #chatToggle, #chatMaximize, #chatPrint {
+      background: none;
+      border: none;
+      color: white;
+      font-size: 14px;
+      cursor: pointer;
+      margin-left: 5px;
+      padding: 2px 4px;
+      border-radius: 3px;
+      transition: background 0.2s;
+    }
+    #chatToggle:hover, #chatMaximize:hover, #chatPrint:hover {
+      background: rgba(255,255,255,0.2);
+    }
+    .chat-message {
+      margin: 8px 0;
+      padding: 8px;
+      border-radius: 6px;
+      user-select: text;
+      -webkit-user-select: text;
+      -moz-user-select: text;
+      -ms-user-select: text;
+      cursor: text;
+    }
+    .user-message {
+      background: rgba(76, 175, 80, 0.3);
+      text-align: right;
+    }
+    .bot-message {
+      background: rgba(255,255,255,0.1);
+    }
+    .bot-message strong {
+      color: #4CAF50;
+    }
+    canvas {
+      display: block; /* removes scrollbar */
+    }
+  </style>
+</head>
+<body>
+<div id="controlPanel">
+  <h3>🌌 Solar System Controls</h3>
+  
+  <div id="speedControl">
+    <label for="speedSlider">Orbital Speed: <span id="speedValue">5x</span></label>
+    <input type="range" id="speedSlider" min="0.1" max="100" step="0.1" value="5">
+    <div style="font-size: 12px; color: #888;">0.1x (Stop) ← → 100x (Super Fast)</div>
+    <div style="margin-top: 5px;">
+      <button onclick="setSpeed(0.1)" style="padding: 2px 6px; margin: 2px; font-size: 10px;">STOP</button>
+      <button onclick="setSpeed(1)" style="padding: 2px 6px; margin: 2px; font-size: 10px;">1x</button>
+      <button onclick="setSpeed(5)" style="padding: 2px 6px; margin: 2px; font-size: 10px;">5x</button>
+      <button onclick="setSpeed(50)" style="padding: 2px 6px; margin: 2px; font-size: 10px;">FAST</button>
+      <button onclick="setSpeed(100)" style="padding: 2px 6px; margin: 2px; font-size: 10px;">SUPER</button>
+    </div>
+  </div>
+  
+  <div id="planetList">
+    <h3>🌌 Explore Solar System</h3>
+    <button class="planet-button" data-planet="Sun">☀️ Sun</button>
+    <button class="planet-button" data-planet="Mercury">☿ Mercury</button>
+    <button class="planet-button" data-planet="Venus">♀ Venus</button>
+    <button class="planet-button" data-planet="Earth">🌍 Earth</button>
+    <button class="planet-button" data-planet="Moon">🌙 Moon</button>
+    <button class="planet-button" data-planet="Mars">♂ Mars</button>
+    <button class="planet-button" data-planet="Jupiter">♃ Jupiter</button>
+    <button class="planet-button" data-planet="Saturn">♄ Saturn</button>
+    <button class="planet-button" data-planet="Uranus">♅ Uranus</button>
+    <button class="planet-button" data-planet="Neptune">♆ Neptune</button>
+    <button class="planet-button" data-planet="Pluto">♇ Pluto</button>
+    <button class="planet-button" data-planet="Halley's Comet">☄️ Halley's Comet</button>
+  </div>
+  
+  <div style="margin-top: 15px; font-size: 12px; color: #888;">
+    <div>• Use mouse to navigate</div>
+    <div>• Click planets for close-up view</div>
+    <div>• Adjust speed with slider</div>
+  </div>
+</div>
+
+<div id="infoBox">Click on a planet to learn more!</div>
+
+<div id="timeDisplay">
+  <div>🕐 Simulation Time</div>
+  <div>Speed: <span id="currentSpeed">5x</span></div>
+  <div id="simTime">Time: 0 days</div>
+</div>
+
+<div id="planetView">
+  <button id="closeView">×</button>
+  <h2 id="planetName">Planet Name</h2>
+  <div id="planetDetails">Planet details will appear here...</div>
+</div>
+
+<div id="chatbot">
+  <div id="chatHeader">
+    🤖 Solar System AI Assistant
+    <div>
+      <button id="chatPrint" title="Print Chat">🖨️</button>
+      <button id="chatMaximize" title="Maximize">⬜</button>
+      <button id="chatToggle" title="Minimize">−</button>
+    </div>
+  </div>
+  <div id="chatMessages">
+    <div class="chat-message bot-message">
+      <strong>AI:</strong> Hello! I'm your Solar System AI assistant. Ask me anything about planets, moons, the Sun, or space! Try questions like:
+      <br>• "Tell me about Mars"
+      <br>• "Which planet is hottest?"
+      <br>• "How big is Jupiter?"
+      <br>• "What causes Earth's seasons?"
+    </div>
+  </div>
+  <div id="chatInput">
+    <input type="text" id="chatTextInput" placeholder="Ask me about the solar system..." />
+    <button id="chatSend">Send</button>
+    <button onclick="testChat()" style="margin-left: 5px; padding: 8px; background: #666; border: none; border-radius: 4px; color: white; font-size: 11px;">Test</button>
+  </div>
+</div>
+<script src="./js/three.min.js"></script>
+<script src="./js/OrbitControls.js"></script>
+<script>
+  // Scene setup
+  const scene = new THREE.Scene();
+  // Camera
+  const camera = new THREE.PerspectiveCamera(45, window.innerWidth/window.innerHeight, 0.1, 2000);
+  camera.position.set(0, 50, 150);
+  // Renderer
+  const renderer = new THREE.WebGLRenderer({antialias:true});
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  document.body.appendChild(renderer.domElement);
+  // Controls
+  const controls = new THREE.OrbitControls(camera, renderer.domElement);
+  controls.minDistance = 20;
+  controls.maxDistance = 500;
+  // Enhanced Sun Lighting
+  const sunLight = new THREE.PointLight(0xffffff, 4, 2000); // Much brighter and farther reach
+  sunLight.position.set(0, 0, 0);
+  sunLight.castShadow = true;
+  scene.add(sunLight);
+  
+  // Additional warm light for Sun glow
+  const sunGlow = new THREE.PointLight(0xffaa00, 2, 500);
+  sunGlow.position.set(0, 0, 0);
+  scene.add(sunGlow);
+  
+  // Ambient Light for soft shadows (reduced to make Sun more prominent)
+  const ambient = new THREE.AmbientLight(0x111111);
+  scene.add(ambient);
+  const loader = new THREE.TextureLoader();
+  // Local texture files
+  const textures = {
+    sun: './assets/textures/SunTexture.jpg',
+    mercury: './assets/textures/MercuryTexture.jpg',
+    venus: './assets/textures/VenusTexture.jpg',
+    earth: './assets/textures/EarthTexture.jpg',
+    mars: './assets/textures/MarsTexture.jpg',
+    jupiter: './assets/textures/JupiterTexture.jpg',
+    saturn: './assets/textures/SaturnTexture.jpg',
+    uranus: './assets/textures/UranusTexture.jpg',
+    neptune: './assets/textures/NeptuneTexture.jpg',
+    pluto: './assets/textures/PlutoTexture.jpg',
+    moon: './assets/textures/MoonTexture.jpg',
+    background: './assets/textures/SpaceTexture.jpg',
+    comet: './assets/textures/MoonTexture.jpg' // Using moon texture for comet nucleus
+  };
+  // Create planets data with realistic orbital mechanics
+  // Real data: distances (AU), periods (days), eccentricity, inclination (degrees)
+  const planetsData = [
+    {
+      name: "Sun",
+      size: 15,
+      texture: textures.sun,
+      semiMajorAxis: 0,
+      eccentricity: 0,
+      inclination: 0,
+      orbitSpeed: 0,
+      realPeriod: 0,
+      info: "The Sun is the star at the center of the Solar System. It contains 99.86% of the system's mass and provides the energy that sustains life on Earth.",
+      details: {
+        type: "G-type Main-sequence Star",
+        mass: "1.989 × 10³⁰ kg (333,000 Earth masses)",
+        diameter: "1.39 million km (109 Earth diameters)",
+        temperature: "Surface: 5,778 K (5,505°C), Core: 15 million°C",
+        composition: "73% Hydrogen, 25% Helium, 2% heavier elements",
+        age: "4.6 billion years",
+        facts: [
+          "The Sun produces energy through nuclear fusion",
+          "It takes 8 minutes for sunlight to reach Earth",
+          "The Sun's core pressure is 250 billion times Earth's atmospheric pressure",
+          "Every second, the Sun converts 600 million tons of hydrogen into helium"
+        ]
+      }
+    },
+    {
+      name: "Mercury",
+      size: 1.5,
+      texture: textures.mercury,
+      semiMajorAxis: 25,  // Scaled from 0.39 AU
+      eccentricity: 0.206, // Most eccentric orbit
+      inclination: 7.0,   // 7° inclination
+      orbitSpeed: 0.1136 * 5, // Scaled up for visibility
+      realPeriod: 88,
+      info: "Mercury has the most elliptical orbit of all planets, varying from 46-70 million km from the Sun. Orbital inclination: 7°",
+      details: {
+        type: "Terrestrial Planet",
+        mass: "3.301 × 10²³ kg (0.055 Earth masses)",
+        diameter: "4,879 km (0.38 Earth diameters)",
+        temperature: "Day: 427°C, Night: -173°C",
+        atmosphere: "Extremely thin (oxygen, sodium, hydrogen)",
+        dayLength: "59 Earth days",
+        facts: [
+          "Mercury has the most extreme temperature variations",
+          "It has no moons or rings",
+          "One day on Mercury lasts longer than its year",
+          "It has a large iron core making up 75% of its radius"
+        ]
+      }
+    },
+    {
+      name: "Venus",
+      size: 3.5,
+      texture: textures.venus,
+      semiMajorAxis: 35,  // Scaled from 0.72 AU
+      eccentricity: 0.007, // Nearly circular
+      inclination: 3.4,   // 3.4° inclination
+      orbitSpeed: 0.0444 * 5, // Scaled up for visibility
+      realPeriod: 225,
+      info: "Venus has the most circular orbit of all planets and rotates backwards. Orbital inclination: 3.4°",
+      details: {
+        type: "Terrestrial Planet",
+        mass: "4.867 × 10²⁴ kg (0.815 Earth masses)",
+        diameter: "12,104 km (0.95 Earth diameters)",
+        temperature: "462°C (hottest planet)",
+        atmosphere: "96% Carbon dioxide, 3.5% Nitrogen",
+        dayLength: "243 Earth days (rotates backwards)",
+        facts: [
+          "Hottest planet due to extreme greenhouse effect",
+          "Rotates backwards compared to most planets",
+          "Has no moons or rings",
+          "Surface pressure is 90 times that of Earth"
+        ]
+      }
+    },
+    {
+      name: "Earth",
+      size: 4,
+      texture: textures.earth,
+      semiMajorAxis: 45,  // Scaled from 1.0 AU (reference)
+      eccentricity: 0.017, // Nearly circular
+      inclination: 0.0,   // Reference plane
+      orbitSpeed: 0.0274 * 5, // Scaled up for visibility
+      realPeriod: 365,
+      info: "Earth's orbit is nearly circular, varying only 3% in distance from the Sun throughout the year. Orbital inclination: 0° (reference)",
+      details: {
+        type: "Terrestrial Planet",
+        mass: "5.972 × 10²⁴ kg (1 Earth mass)",
+        diameter: "12,756 km (1 Earth diameter)",
+        temperature: "Average: 15°C (Range: -89°C to 58°C)",
+        atmosphere: "78% Nitrogen, 21% Oxygen, 1% other gases",
+        dayLength: "24 hours",
+        facts: [
+          "The only known planet with life",
+          "71% of surface is covered by water",
+          "Has one natural satellite: the Moon",
+          "Magnetic field protects from solar radiation"
+        ]
+      }
+    },
+    {
+      name: "Mars",
+      size: 2.5,
+      texture: textures.mars,
+      semiMajorAxis: 60,  // Scaled from 1.52 AU
+      eccentricity: 0.093, // Moderately elliptical
+      inclination: 1.9,   // 1.9° inclination
+      orbitSpeed: 0.0146 * 5, // Scaled up for visibility
+      realPeriod: 687,
+      info: "Mars has a moderately elliptical orbit, causing significant seasonal variations. Orbital inclination: 1.9°",
+      details: {
+        type: "Terrestrial Planet",
+        mass: "6.39 × 10²³ kg (0.107 Earth masses)",
+        diameter: "6,792 km (0.53 Earth diameters)",
+        temperature: "Average: -65°C (Range: -125°C to 20°C)",
+        atmosphere: "95% Carbon dioxide, 3% Nitrogen, 2% Argon",
+        dayLength: "24.6 hours",
+        facts: [
+          "Known as the Red Planet due to iron oxide",
+          "Has the largest volcano in the solar system (Olympus Mons)",
+          "Has two small moons: Phobos and Deimos",
+          "Evidence suggests it once had liquid water"
+        ]
+      }
+    },
+    {
+      name: "Jupiter",
+      size: 10,
+      texture: textures.jupiter,
+      semiMajorAxis: 85,  // Scaled from 5.2 AU
+      eccentricity: 0.049, // Slightly elliptical
+      inclination: 1.3,   // 1.3° inclination
+      orbitSpeed: 0.0023 * 5, // Scaled up for visibility
+      realPeriod: 4333,
+      info: "Jupiter's massive gravity helps protect inner planets from asteroids and comets. Orbital inclination: 1.3°",
+      details: {
+        type: "Gas Giant",
+        mass: "1.898 × 10²⁷ kg (317.8 Earth masses)",
+        diameter: "142,984 km (11.2 Earth diameters)",
+        temperature: "Average: -110°C",
+        atmosphere: "89% Hydrogen, 10% Helium",
+        dayLength: "9.9 hours",
+        facts: [
+          "Largest planet in our solar system",
+          "Has over 80 known moons including the four Galilean moons",
+          "The Great Red Spot is a storm larger than Earth",
+          "Acts as a 'cosmic vacuum cleaner' protecting inner planets"
+        ]
+      }
+    },
+    {
+      name: "Saturn",
+      size: 9,
+      texture: textures.saturn,
+      semiMajorAxis: 110, // Scaled from 9.5 AU
+      eccentricity: 0.057, // Slightly elliptical
+      inclination: 2.5,   // 2.5° inclination
+      orbitSpeed: 0.0009 * 5, // Scaled up for visibility
+      realPeriod: 10759,
+      info: "Saturn's spectacular rings are made of ice and rock particles. Orbital inclination: 2.5°",
+      details: {
+        type: "Gas Giant",
+        mass: "5.683 × 10²⁶ kg (95.2 Earth masses)",
+        diameter: "120,536 km (9.4 Earth diameters)",
+        temperature: "Average: -140°C",
+        atmosphere: "96% Hydrogen, 3% Helium",
+        dayLength: "10.7 hours",
+        facts: [
+          "Famous for its spectacular ring system",
+          "Less dense than water - it would float!",
+          "Has over 80 known moons including Titan",
+          "Rings are made of ice and rock particles"
+        ]
+      }
+    },
+    {
+      name: "Uranus",
+      size: 7,
+      texture: textures.uranus,
+      semiMajorAxis: 140, // Scaled from 19.2 AU
+      eccentricity: 0.046, // Nearly circular
+      inclination: 0.8,   // 0.8° inclination
+      orbitSpeed: 0.0003 * 5, // Scaled up for visibility
+      realPeriod: 30687,
+      info: "Uranus rotates on its side at 98° and has a faint ring system. Orbital inclination: 0.8°",
+      details: {
+        type: "Ice Giant",
+        mass: "8.681 × 10²⁵ kg (14.5 Earth masses)",
+        diameter: "51,118 km (4.0 Earth diameters)",
+        temperature: "Average: -195°C",
+        atmosphere: "83% Hydrogen, 15% Helium, 2% Methane",
+        dayLength: "17.2 hours",
+        facts: [
+          "Rotates on its side at a 98-degree angle",
+          "Has a faint ring system discovered in 1977",
+          "Coldest planetary atmosphere in the solar system",
+          "Has 27 known moons named after Shakespeare characters"
+        ]
+      }
+    },
+    {
+      name: "Neptune",
+      size: 7,
+      texture: textures.neptune,
+      semiMajorAxis: 170, // Scaled from 30.1 AU
+      eccentricity: 0.010, // Nearly circular
+      inclination: 1.8,   // 1.8° inclination
+      orbitSpeed: 0.00017 * 5, // Scaled up for visibility
+      realPeriod: 60190,
+      info: "Neptune has the strongest winds in the solar system, up to 2,100 km/h. Orbital inclination: 1.8°",
+      details: {
+        type: "Ice Giant",
+        mass: "1.024 × 10²⁶ kg (17.1 Earth masses)",
+        diameter: "49,528 km (3.9 Earth diameters)",
+        temperature: "Average: -200°C",
+        atmosphere: "80% Hydrogen, 19% Helium, 1% Methane",
+        dayLength: "16.1 hours",
+        facts: [
+          "Has the strongest winds in the solar system",
+          "Deep blue color comes from methane in its atmosphere",
+          "Takes 165 Earth years to orbit the Sun",
+          "Has 14 known moons, largest is Triton"
+        ]
+      }
+    },
+    {
+      name: "Pluto",
+      size: 1,
+      texture: textures.pluto,
+      semiMajorAxis: 200, // Scaled from 39.5 AU
+      eccentricity: 0.244, // Very elliptical
+      inclination: 17.1,  // Highly inclined
+      orbitSpeed: 0.00011 * 5, // Scaled up for visibility
+      realPeriod: 90560,
+      info: "Pluto has the most elliptical and inclined orbit, sometimes closer to Sun than Neptune. Orbital inclination: 17.1°",
+      details: {
+        type: "Dwarf Planet",
+        mass: "1.309 × 10²² kg (0.002 Earth masses)",
+        diameter: "2,376 km (0.18 Earth diameters)",
+        temperature: "Average: -230°C",
+        atmosphere: "Thin: Nitrogen, Methane, Carbon monoxide",
+        dayLength: "6.4 Earth days",
+        facts: [
+          "Reclassified as a dwarf planet in 2006",
+          "Has a highly elliptical and inclined orbit",
+          "Sometimes closer to the Sun than Neptune",
+          "Has five known moons, largest is Charon"
+        ]
+      }
+    },
+    {
+      name: "Halley's Comet",
+      size: 0.5, // Very small nucleus
+      texture: textures.comet,
+      semiMajorAxis: 120, // Average distance (varies greatly due to extreme eccentricity)
+      eccentricity: 0.967, // Extremely elliptical orbit
+      inclination: 162.3, // Retrograde orbit (>90° means backwards)
+      orbitSpeed: 0.000365, // Very slow average speed (76 year period)
+      realPeriod: 27759, // ~76 years
+      info: "Halley's Comet is the most famous comet, visible from Earth every 75-76 years. It has a highly elliptical orbit that takes it from inside Venus's orbit to beyond Neptune.",
+      details: {
+        type: "Comet",
+        mass: "2.2 × 10¹⁴ kg (very small)",
+        diameter: "15 km × 8 km × 8 km (nucleus)",
+        temperature: "Varies: -270°C (far) to 27°C (near Sun)",
+        atmosphere: "Coma and tail when near Sun",
+        dayLength: "52.5 hours",
+        facts: [
+          "Last visible from Earth in 1986, next appearance in 2061",
+          "The comet's nucleus is only about 15km long and 8km wide",
+          "It travels in a retrograde orbit (opposite to planets)",
+          "The comet's tail can extend millions of kilometers when near the Sun",
+          "It's been recorded by astronomers for over 2,000 years"
+        ]
+      }
+    }
+  ];
+  // Create group for planets & orbits
+  const solarSystem = new THREE.Group();
+  scene.add(solarSystem);
+  // Store meshes for interaction
+  let planetMeshes = [];
+  // Create planets
+  planetsData.forEach(planet => {
+    const geometry = new THREE.SphereGeometry(planet.size, 48, 48);
+    const texture = loader.load(planet.texture);
+    
+    let material;
+    if (planet.name === "Sun") {
+      // Make the Sun emit light and glow
+      material = new THREE.MeshBasicMaterial({ 
+        map: texture,
+        emissive: 0xffaa00,
+        emissiveIntensity: 0.3
+      });
+    } else if (planet.name === "Halley's Comet") {
+      // Special material for comet nucleus
+      material = new THREE.MeshStandardMaterial({ 
+        map: texture,
+        roughness: 0.9,
+        metalness: 0.1,
+        emissive: 0x222222,
+        emissiveIntensity: 0.1
+      });
+    } else {
+      // Regular planets use standard material
+      material = new THREE.MeshStandardMaterial({ map: texture });
+    }
+    
+    const mesh = new THREE.Mesh(geometry, material);
+    
+    // Set initial position based on orbital parameters
+    if (planet.semiMajorAxis > 0) {
+      // Start at perihelion (closest point) for elliptical orbits
+      const initialDistance = planet.semiMajorAxis * (1 - planet.eccentricity);
+      mesh.position.set(initialDistance, 0, 0);
+    } else {
+      mesh.position.set(0, 0, 0); // Sun at center
+    }
+    
+    mesh.userData = planet;
+    
+    // Add corona glow effect to the Sun
+    if (planet.name === "Sun") {
+      // Create a larger, semi-transparent sphere for the corona
+      const coronaGeometry = new THREE.SphereGeometry(planet.size * 1.3, 32, 32);
+      const coronaMaterial = new THREE.MeshBasicMaterial({
+        color: 0xffaa00,
+        transparent: true,
+        opacity: 0.2,
+        side: THREE.BackSide
+      });
+      const corona = new THREE.Mesh(coronaGeometry, coronaMaterial);
+      mesh.add(corona);
+      
+      // Add outer glow
+      const outerGlowGeometry = new THREE.SphereGeometry(planet.size * 1.6, 32, 32);
+      const outerGlowMaterial = new THREE.MeshBasicMaterial({
+        color: 0xff6600,
+        transparent: true,
+        opacity: 0.1,
+        side: THREE.BackSide
+      });
+      const outerGlow = new THREE.Mesh(outerGlowGeometry, outerGlowMaterial);
+      mesh.add(outerGlow);
+    }
+    
+    // Add comet tail for Halley's Comet
+    if (planet.name === "Halley's Comet") {
+      // Create comet tail using a cone geometry
+      const tailGeometry = new THREE.ConeGeometry(0.2, 15, 8);
+      const tailMaterial = new THREE.MeshBasicMaterial({
+        color: 0x88ccff,
+        transparent: true,
+        opacity: 0.3,
+        side: THREE.DoubleSide
+      });
+      const tail = new THREE.Mesh(tailGeometry, tailMaterial);
+      tail.rotation.x = Math.PI / 2; // Point the tail backwards
+      tail.position.z = -7.5; // Position behind the nucleus
+      mesh.add(tail);
+      
+      // Add a second, wider tail for dust
+      const dustTailGeometry = new THREE.ConeGeometry(0.4, 12, 8);
+      const dustTailMaterial = new THREE.MeshBasicMaterial({
+        color: 0xffaa44,
+        transparent: true,
+        opacity: 0.2,
+        side: THREE.DoubleSide
+      });
+      const dustTail = new THREE.Mesh(dustTailGeometry, dustTailMaterial);
+      dustTail.rotation.x = Math.PI / 2;
+      dustTail.position.z = -6;
+      dustTail.rotation.y = 0.2; // Slightly offset from ion tail
+      mesh.add(dustTail);
+      
+      // Add coma (glowing atmosphere around nucleus)
+      const comaGeometry = new THREE.SphereGeometry(planet.size * 3, 16, 16);
+      const comaMaterial = new THREE.MeshBasicMaterial({
+        color: 0x66aaff,
+        transparent: true,
+        opacity: 0.1,
+        side: THREE.BackSide
+      });
+      const coma = new THREE.Mesh(comaGeometry, comaMaterial);
+      mesh.add(coma);
+    }
+    
+    solarSystem.add(mesh);
+    planetMeshes.push(mesh);
+  });
+  
+  // Create orbital path visualizations
+  planetsData.forEach(planet => {
+    if (planet.semiMajorAxis > 0) {
+      const points = [];
+      const segments = 128;
+      
+      for (let i = 0; i <= segments; i++) {
+        const angle = (i / segments) * 2 * Math.PI;
+        
+        // Calculate elliptical orbit points
+        const eccentricAnomaly = angle;
+        const trueAnomaly = 2 * Math.atan2(
+          Math.sqrt(1 + planet.eccentricity) * Math.sin(eccentricAnomaly / 2),
+          Math.sqrt(1 - planet.eccentricity) * Math.cos(eccentricAnomaly / 2)
+        );
+        
+        const distance = planet.semiMajorAxis * (1 - planet.eccentricity * Math.cos(eccentricAnomaly));
+        const x = distance * Math.cos(trueAnomaly);
+        const y = distance * Math.sin(trueAnomaly);
+        
+        // Apply orbital inclination
+        const inclinationRad = planet.inclination * Math.PI / 180;
+        points.push(new THREE.Vector3(
+          x,
+          y * Math.sin(inclinationRad),
+          y * Math.cos(inclinationRad)
+        ));
+      }
+      
+      const orbitGeometry = new THREE.BufferGeometry().setFromPoints(points);
+      const orbitMaterial = new THREE.LineBasicMaterial({ 
+        color: 0x444444, 
+        opacity: 0.3, 
+        transparent: true 
+      });
+      const orbitLine = new THREE.Line(orbitGeometry, orbitMaterial);
+      solarSystem.add(orbitLine);
+    }
+  });
+  
+  // Add Saturn Rings
+  const saturn = planetMeshes.find(p => p.userData.name === "Saturn");
+  if (saturn) {
+    const ringGeometry = new THREE.RingGeometry(10, 14, 64);
+    const ringMaterial = new THREE.MeshBasicMaterial({color: 0xCCCC99, side: THREE.DoubleSide, opacity:0.6, transparent:true});
+    const ring = new THREE.Mesh(ringGeometry, ringMaterial);
+    ring.rotation.x = Math.PI / 2;
+    saturn.add(ring);
+  }
+
+  // Add Moon orbiting Earth
+  const earth = planetMeshes.find(p => p.userData.name === "Earth");
+  let moon = null;
+  if (earth) {
+    console.log('Creating Moon for Earth:', earth);
+    const moonGeometry = new THREE.SphereGeometry(0.8, 32, 32);
+    const moonTexture = loader.load(textures.moon);
+    const moonMaterial = new THREE.MeshStandardMaterial({ map: moonTexture });
+    moon = new THREE.Mesh(moonGeometry, moonMaterial);
+    moon.position.set(8, 0, 0); // Position relative to Earth
+    moon.userData = {
+      name: "Moon",
+      info: "The Moon is Earth's only natural satellite and the fifth largest moon in the solar system.",
+      details: {
+        type: "Natural Satellite",
+        mass: "7.342 × 10²² kg (0.012 Earth masses)",
+        diameter: "3,474 km (0.27 Earth diameters)",
+        temperature: "Day: 127°C, Night: -173°C",
+        atmosphere: "None (extremely thin exosphere)",
+        dayLength: "27.3 Earth days (tidally locked)",
+        facts: [
+          "Always shows the same face to Earth (tidally locked)",
+          "Causes Earth's tides through gravitational pull",
+          "Formed about 4.5 billion years ago",
+          "Is slowly moving away from Earth (3.8 cm per year)"
+        ]
+      }
+    };
+    earth.add(moon);
+    planetMeshes.push(moon);
+    console.log('Moon created and added to Earth. Total meshes:', planetMeshes.length);
+  } else {
+    console.error('Earth not found! Cannot create Moon.');
+  }
+  // Background
+  const bgTexture = loader.load(textures.background);
+  scene.background = bgTexture;
+  // Enhanced raycaster for planet selection and zoom
+  const raycaster = new THREE.Raycaster();
+  const mouse = new THREE.Vector2();
+  const infoBox = document.getElementById('infoBox');
+  let selectedPlanet = null;
+  let zoomLevel = 1;
+  let followingZoomLevel = 1; // Separate zoom for following mode
+  let baseDistance = 50;
+  
+  function onDocumentMouseDown(event) {
+    // Prevent interaction if clicking on UI elements
+    if (event.target !== renderer.domElement) return;
+    
+    event.preventDefault();
+    mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+    mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+    
+    raycaster.setFromCamera(mouse, camera);
+    const intersects = raycaster.intersectObjects(planetMeshes);
+    
+    if (intersects.length > 0) {
+      const clickedPlanet = intersects[0].object;
+      const planet = clickedPlanet.userData;
+      
+      // Select the planet
+      selectPlanet(clickedPlanet);
+      
+      // Show info box with orbital details
+      let orbitalInfo = '';
+      if (planet.realPeriod > 0) {
+        const years = (planet.realPeriod / 365).toFixed(1);
+        const perihelion = (planet.semiMajorAxis * (1 - planet.eccentricity)).toFixed(1);
+        const aphelion = (planet.semiMajorAxis * (1 + planet.eccentricity)).toFixed(1);
+        orbitalInfo = `<br><strong>Orbital Period:</strong> ${planet.realPeriod} days (${years} Earth years)
+                      <br><strong>Orbit Shape:</strong> ${planet.eccentricity > 0.1 ? 'Elliptical' : 'Nearly Circular'} (e=${planet.eccentricity})
+                      <br><strong>Distance Range:</strong> ${perihelion} - ${aphelion} units
+                      <br><strong>Inclination:</strong> ${planet.inclination}°`;
+      }
+      infoBox.innerHTML = `<h2>${planet.name}</h2><p>${planet.info}${orbitalInfo}</p>
+                          <div style="margin-top: 10px; font-size: 11px; color: #888;">
+                            🔍 <strong>Isolated View!</strong> Use mouse wheel or +/- keys to zoom<br>
+                            📊 Zoom: ${zoomLevel.toFixed(1)}x | Press ESC to return to solar system
+                          </div>`;
+      infoBox.style.display = 'block';
+    } else {
+      // Clicked on empty space - deselect
+      deselectPlanet();
+      infoBox.style.display = 'none';
+    }
+  }
+  
+  function selectPlanet(planet) {
+    // Store previous state for restoration
+    if (!selectedPlanet) {
+      // Store original visibility of all objects
+      planetMeshes.forEach(mesh => {
+        mesh.userData.originalVisible = mesh.visible;
+      });
+      // Store original background
+      scene.userData.originalBackground = scene.background;
+    }
+    
+    // Remove previous selection highlight
+    if (selectedPlanet && selectedPlanet.userData.originalMaterial) {
+      selectedPlanet.material = selectedPlanet.userData.originalMaterial;
+    }
+    
+    selectedPlanet = planet;
+    zoomLevel = 1;
+    
+    // Hide all other planets and objects
+    planetMeshes.forEach(mesh => {
+      if (mesh !== planet) {
+        mesh.visible = false;
+      }
+    });
+    
+    // Hide the background (stars)
+    scene.background = new THREE.Color(0x000000);
+    
+    // Make sure selected planet is visible and bright
+    planet.visible = true;
+    
+    // Ensure selected planet material is bright and opaque
+    if (!planet.userData.originalMaterial) {
+      planet.userData.originalMaterial = planet.material.clone();
+    }
+    
+    // Create bright material for selected planet
+    const brightMaterial = planet.userData.originalMaterial.clone();
+    brightMaterial.opacity = 1.0;
+    brightMaterial.transparent = false;
+    
+    // Add dedicated lighting for isolated view
+    if (!scene.userData.isolatedLight) {
+      // Create bright directional light for isolated planet viewing
+      const isolatedLight = new THREE.DirectionalLight(0xffffff, 1.5);
+      isolatedLight.position.set(10, 10, 10);
+      isolatedLight.name = 'isolatedLight';
+      scene.add(isolatedLight);
+      scene.userData.isolatedLight = isolatedLight;
+      
+      // Add ambient light boost for isolated view
+      const isolatedAmbient = new THREE.AmbientLight(0x404040, 0.6);
+      isolatedAmbient.name = 'isolatedAmbient';
+      scene.add(isolatedAmbient);
+      scene.userData.isolatedAmbient = isolatedAmbient;
+    }
+    
+    planet.material = brightMaterial;
+    
+    // If selecting Moon, also keep Earth visible but dimmed
+    if (planet.userData.name === "Moon") {
+      const earth = planetMeshes.find(p => p.userData && p.userData.name === "Earth");
+      if (earth) {
+        earth.visible = true;
+        // Dim Earth when focusing on Moon
+        if (!earth.userData.originalMaterial) {
+          earth.userData.originalMaterial = earth.material.clone();
+        }
+        const dimmedMaterial = earth.userData.originalMaterial.clone();
+        dimmedMaterial.opacity = 0.3;
+        dimmedMaterial.transparent = true;
+        earth.material = dimmedMaterial;
+      }
+    }
+    
+    // Position camera close to the selected planet
+    focusOnSelectedPlanet();
+    
+    console.log(`Isolated view: ${planet.userData.name}`);
+  }
+  
+  function deselectPlanet() {
+    if (!selectedPlanet) return;
+    
+    // Restore selected planet's original position
+    if (selectedPlanet.userData.name === "Moon" && selectedPlanet.userData.wasChildOfEarth) {
+      // Return Moon to Earth
+      scene.remove(selectedPlanet);
+      selectedPlanet.userData.earthParent.add(selectedPlanet);
+      selectedPlanet.position.set(8, 0, 0); // Moon's original position relative to Earth
+      selectedPlanet.userData.wasChildOfEarth = false;
+      selectedPlanet.userData.earthParent = null;
+    } else if (selectedPlanet.userData.originalPosition) {
+      // Restore original position for regular planets
+      selectedPlanet.position.copy(selectedPlanet.userData.originalPosition);
+    }
+    
+    // Restore all planets visibility
+    planetMeshes.forEach(mesh => {
+      mesh.visible = mesh.userData.originalVisible !== undefined ? mesh.userData.originalVisible : true;
+      
+      // Restore original materials
+      if (mesh.userData.originalMaterial) {
+        mesh.material = mesh.userData.originalMaterial;
+      }
+    });
+    
+    // Restore original background
+    if (scene.userData.originalBackground) {
+      scene.background = scene.userData.originalBackground;
+    }
+    
+    // Remove isolated view lighting
+    if (scene.userData.isolatedLight) {
+      scene.remove(scene.userData.isolatedLight);
+      scene.userData.isolatedLight = null;
+    }
+    if (scene.userData.isolatedAmbient) {
+      scene.remove(scene.userData.isolatedAmbient);
+      scene.userData.isolatedAmbient = null;
+    }
+    
+    // Reset camera to overview position
+    camera.position.set(0, 50, 150);
+    controls.target.set(0, 0, 0);
+    controls.update();
+    
+    selectedPlanet = null;
+    zoomLevel = 1;
+    
+    console.log('Returned to solar system view');
+  }
+  
+  function focusOnSelectedPlanet() {
+    if (!selectedPlanet) return;
+    
+    // For isolated view, position planet at center and camera around it
+    let targetPos = new THREE.Vector3(0, 0, 0);
+    
+    // Move the selected planet to center for isolated view
+    if (selectedPlanet.userData.name === "Moon") {
+      // For Moon, we need to handle it specially since it's a child of Earth
+      selectedPlanet.position.set(0, 0, 0);
+      if (selectedPlanet.parent) {
+        // Temporarily remove from Earth and add to scene
+        const earth = selectedPlanet.parent;
+        earth.remove(selectedPlanet);
+        scene.add(selectedPlanet);
+        selectedPlanet.userData.wasChildOfEarth = true;
+        selectedPlanet.userData.earthParent = earth;
+      }
+    } else {
+      // Store original position for restoration
+      if (!selectedPlanet.userData.originalPosition) {
+        selectedPlanet.userData.originalPosition = selectedPlanet.position.clone();
+      }
+      selectedPlanet.position.set(0, 0, 0);
+    }
+    
+    // Calculate zoom distance based on planet size and zoom level
+    let planetSize = 2; // default
+    if (selectedPlanet.userData.name !== "Moon") {
+      const planetIndex = planetsData.findIndex(p => p.name === selectedPlanet.userData.name);
+      if (planetIndex !== -1) {
+        planetSize = planetsData[planetIndex].size;
+      }
+    } else {
+      planetSize = 0.8; // Moon size
+    }
+    
+    // Position camera around the centered planet
+    const distance = (planetSize * 6) / zoomLevel; // Closer base distance for isolated view
+    const height = (planetSize * 2) / zoomLevel;
+    
+    camera.position.set(distance, height, distance);
+    controls.target.copy(targetPos);
+    controls.update();
+    
+    // Update info box zoom level
+    if (infoBox.style.display === 'block') {
+      const zoomInfo = infoBox.querySelector('div[style*="margin-top: 10px"]');
+      if (zoomInfo) {
+        zoomInfo.innerHTML = `🔍 <strong>Isolated View!</strong> Use mouse wheel or +/- keys to zoom<br>
+                             📊 Zoom: ${zoomLevel.toFixed(1)}x | Press ESC to return to solar system`;
+      }
+    }
+  }
+  
+  // Mouse wheel zoom for selected planet or following planet
+  function onMouseWheel(event) {
+    if (!selectedPlanet && followingPlanet === null) return;
+    
+    event.preventDefault();
+    
+    const zoomSpeed = 0.1;
+    const minZoom = 0.5;
+    const maxZoom = 10;
+    
+    if (selectedPlanet) {
+      // Isolated view zoom
+      if (event.deltaY < 0) {
+        zoomLevel = Math.min(zoomLevel + zoomSpeed, maxZoom);
+      } else {
+        zoomLevel = Math.max(zoomLevel - zoomSpeed, minZoom);
+      }
+      focusOnSelectedPlanet();
+      console.log(`Isolated zoom level: ${zoomLevel.toFixed(1)}x`);
+    } else if (followingPlanet !== null) {
+      // Following mode zoom
+      if (event.deltaY < 0) {
+        followingZoomLevel = Math.min(followingZoomLevel + zoomSpeed, maxZoom);
+      } else {
+        followingZoomLevel = Math.max(followingZoomLevel - zoomSpeed, minZoom);
+      }
+      console.log(`Following zoom level: ${followingZoomLevel.toFixed(1)}x`);
+    }
+  }
+  
+  // Keyboard controls for zoom
+  function onKeyDown(event) {
+    if (!selectedPlanet && followingPlanet === null) return;
+    
+    const zoomSpeed = 0.2;
+    const minZoom = 0.5;
+    const maxZoom = 10;
+    
+    switch(event.key) {
+      case '+':
+      case '=':
+        event.preventDefault();
+        if (selectedPlanet) {
+          zoomLevel = Math.min(zoomLevel + zoomSpeed, maxZoom);
+          focusOnSelectedPlanet();
+          console.log(`Isolated zoom in: ${zoomLevel.toFixed(1)}x`);
+        } else if (followingPlanet !== null) {
+          followingZoomLevel = Math.min(followingZoomLevel + zoomSpeed, maxZoom);
+          console.log(`Following zoom in: ${followingZoomLevel.toFixed(1)}x`);
+        }
+        break;
+      case '-':
+      case '_':
+        event.preventDefault();
+        if (selectedPlanet) {
+          zoomLevel = Math.max(zoomLevel - zoomSpeed, minZoom);
+          focusOnSelectedPlanet();
+          console.log(`Isolated zoom out: ${zoomLevel.toFixed(1)}x`);
+        } else if (followingPlanet !== null) {
+          followingZoomLevel = Math.max(followingZoomLevel - zoomSpeed, minZoom);
+          console.log(`Following zoom out: ${followingZoomLevel.toFixed(1)}x`);
+        }
+        break;
+      case 'Escape':
+        if (selectedPlanet) {
+          event.preventDefault();
+          deselectPlanet();
+          infoBox.style.display = 'none';
+        } else if (followingPlanet !== null) {
+          event.preventDefault();
+          resetCamera();
+        }
+        break;
+    }
+  }
+  
+  // Event listeners
+  window.addEventListener('mousedown', onDocumentMouseDown, false);
+  renderer.domElement.addEventListener('wheel', onMouseWheel, { passive: false });
+  document.addEventListener('keydown', onKeyDown);
+  // Speed control variables
+  let speedMultiplier = 5;
+  let followingPlanet = null;
+  let originalCameraPosition = { x: 0, y: 50, z: 150 };
+  
+  // UI Elements
+  const speedSlider = document.getElementById('speedSlider');
+  const speedValue = document.getElementById('speedValue');
+  const currentSpeed = document.getElementById('currentSpeed');
+  const planetButtons = document.querySelectorAll('.planet-button');
+  const planetView = document.getElementById('planetView');
+  const planetName = document.getElementById('planetName');
+  const planetDetails = document.getElementById('planetDetails');
+  const closeView = document.getElementById('closeView');
+  
+  // Debug: Check if elements exist
+  console.log('Speed slider found:', speedSlider);
+  console.log('Speed value found:', speedValue);
+  console.log('Current speed found:', currentSpeed);
+  
+  // Speed control with error handling
+  if (speedSlider && speedValue && currentSpeed) {
+    speedSlider.addEventListener('input', (e) => {
+      speedMultiplier = parseFloat(e.target.value);
+      speedValue.textContent = speedMultiplier + 'x';
+      currentSpeed.textContent = speedMultiplier + 'x';
+      console.log('Speed changed to:', speedMultiplier);
+    });
+    
+    // Also listen for 'change' event as backup
+    speedSlider.addEventListener('change', (e) => {
+      speedMultiplier = parseFloat(e.target.value);
+      speedValue.textContent = speedMultiplier + 'x';
+      currentSpeed.textContent = speedMultiplier + 'x';
+      console.log('Speed changed (change event) to:', speedMultiplier);
+    });
+  } else {
+    console.error('Speed control elements not found!');
+  }
+  
+  // Manual speed setting function (for buttons)
+  window.setSpeed = function(speed) {
+    speedMultiplier = speed;
+    if (speedSlider) speedSlider.value = speed;
+    if (speedValue) speedValue.textContent = speed + 'x';
+    if (currentSpeed) currentSpeed.textContent = speed + 'x';
+    console.log('Speed manually set to:', speed);
+    
+    // Visual feedback - flash the control panel
+    const controlPanel = document.getElementById('controlPanel');
+    if (controlPanel) {
+      controlPanel.style.border = '2px solid #4CAF50';
+      setTimeout(() => {
+        controlPanel.style.border = '1px solid #333';
+      }, 500);
+    }
+  };
+  
+  // Planet viewing functions
+  function showPlanetDetails(planetData) {
+    planetName.textContent = planetData.name;
+    
+    let detailsHTML = `<p>${planetData.info}</p>`;
+    
+    if (planetData.details) {
+      detailsHTML += `
+        <div style="margin-top: 10px;">
+          <strong>Type:</strong> ${planetData.details.type}<br>
+          <strong>Mass:</strong> ${planetData.details.mass}<br>
+          <strong>Diameter:</strong> ${planetData.details.diameter}<br>
+          <strong>Temperature:</strong> ${planetData.details.temperature}<br>
+          ${planetData.details.atmosphere ? `<strong>Atmosphere:</strong> ${planetData.details.atmosphere}<br>` : ''}
+          ${planetData.details.dayLength ? `<strong>Day Length:</strong> ${planetData.details.dayLength}<br>` : ''}
+        </div>
+        <div style="margin-top: 10px;">
+          <strong>Interesting Facts:</strong>
+          <ul style="margin: 5px 0; padding-left: 20px;">
+            ${planetData.details.facts.map(fact => `<li>${fact}</li>`).join('')}
+          </ul>
+        </div>
+      `;
+    }
+    
+    planetDetails.innerHTML = detailsHTML;
+    planetView.style.display = 'block';
+  }
+  
+  function focusOnPlanet(planetName) {
+    console.log('Focusing on planet:', planetName);
+    
+    // Handle Moon separately since it's not in planetsData array
+    if (planetName === "Moon") {
+      console.log('Looking for Moon in planetMeshes:', planetMeshes.length, 'meshes');
+      const moonMesh = planetMeshes.find(p => p.userData && p.userData.name === "Moon");
+      console.log('Moon mesh found:', moonMesh);
+      
+      if (moonMesh) {
+        // Find Moon's index in planetMeshes array
+        followingPlanet = planetMeshes.findIndex(p => p.userData && p.userData.name === "Moon");
+        followingZoomLevel = 1; // Reset zoom level when starting to follow Moon
+        console.log('Moon index in planetMeshes:', followingPlanet);
+        console.log('Moon userData:', moonMesh.userData);
+        showPlanetDetails(moonMesh.userData);
+        
+        // Update button states
+        planetButtons.forEach(btn => btn.classList.remove('active'));
+        document.querySelector(`[data-planet="${planetName}"]`).classList.add('active');
+      } else {
+        console.error('Moon mesh not found! Available meshes:', planetMeshes.map(p => p.userData?.name || 'unnamed'));
+      }
+      return;
+    }
+    
+    // Handle regular planets
+    const planetIndex = planetsData.findIndex(p => p.name === planetName);
+    if (planetIndex !== -1) {
+      followingPlanet = planetIndex;
+      followingZoomLevel = 1; // Reset zoom level when starting to follow new planet
+      showPlanetDetails(planetsData[planetIndex]);
+      
+      // Update button states
+      planetButtons.forEach(btn => btn.classList.remove('active'));
+      document.querySelector(`[data-planet="${planetName}"]`).classList.add('active');
+    }
+  }
+  
+  function resetCamera() {
+    followingPlanet = null;
+    followingZoomLevel = 1; // Reset following zoom level
+    camera.position.set(originalCameraPosition.x, originalCameraPosition.y, originalCameraPosition.z);
+    controls.target.set(0, 0, 0);
+    planetButtons.forEach(btn => btn.classList.remove('active'));
+    planetView.style.display = 'none';
+  }
+  
+  // Event listeners
+  planetButtons.forEach(button => {
+    button.addEventListener('click', () => {
+      const planetName = button.getAttribute('data-planet');
+      focusOnPlanet(planetName);
+    });
+  });
+  
+  closeView.addEventListener('click', resetCamera);
+  
+  // Chatbot functionality
+  const chatbot = document.getElementById('chatbot');
+  const chatMessages = document.getElementById('chatMessages');
+  const chatTextInput = document.getElementById('chatTextInput');
+  const chatSend = document.getElementById('chatSend');
+  const chatToggle = document.getElementById('chatToggle');
+  const chatMaximize = document.getElementById('chatMaximize');
+  const chatPrint = document.getElementById('chatPrint');
+  
+  // Debug: Check if chatbot elements exist
+  console.log('Chatbot elements found:', {
+    chatbot: !!chatbot,
+    chatMessages: !!chatMessages,
+    chatTextInput: !!chatTextInput,
+    chatSend: !!chatSend,
+    chatToggle: !!chatToggle,
+    chatMaximize: !!chatMaximize,
+    chatPrint: !!chatPrint
+  });
+  
+  let chatVisible = true;
+  let chatMaximized = false;
+  
+  // Ensure input is focusable
+  if (chatTextInput) {
+    chatTextInput.style.pointerEvents = 'auto';
+    chatTextInput.tabIndex = 0;
+    
+    // Test click handler
+    chatTextInput.addEventListener('click', () => {
+      console.log('Chat input clicked!');
+      chatTextInput.focus();
+    });
+    
+    // Test focus handler
+    chatTextInput.addEventListener('focus', () => {
+      console.log('Chat input focused!');
+    });
+  }
+  
+  // Toggle chatbot visibility (minimize/restore)
+  chatToggle.addEventListener('click', () => {
+    chatVisible = !chatVisible;
+    if (chatVisible) {
+      chatbot.classList.remove('minimized');
+      chatToggle.textContent = '−';
+      chatToggle.title = 'Minimize';
+    } else {
+      chatbot.classList.add('minimized');
+      chatbot.classList.remove('maximized');
+      chatMaximized = false;
+      chatToggle.textContent = '+';
+      chatToggle.title = 'Restore';
+      chatMaximize.textContent = '⬜';
+      chatMaximize.title = 'Maximize';
+    }
+  });
+  
+  // Maximize/restore chatbot
+  chatMaximize.addEventListener('click', () => {
+    if (!chatVisible) {
+      // If minimized, restore first
+      chatVisible = true;
+      chatbot.classList.remove('minimized');
+      chatToggle.textContent = '−';
+      chatToggle.title = 'Minimize';
+    }
+    
+    chatMaximized = !chatMaximized;
+    if (chatMaximized) {
+      chatbot.classList.add('maximized');
+      chatMaximize.textContent = '🗗';
+      chatMaximize.title = 'Restore';
+    } else {
+      chatbot.classList.remove('maximized');
+      chatMaximize.textContent = '⬜';
+      chatMaximize.title = 'Maximize';
+    }
+  });
+  
+  // Print chatbot conversation
+  chatPrint.addEventListener('click', () => {
+    const printWindow = window.open('', '_blank');
+    const chatContent = chatMessages.innerHTML;
+    const currentDate = new Date().toLocaleString();
+    
+    printWindow.document.write(`
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Solar System AI Chat - ${currentDate}</title>
+        <style>
+          body { font-family: Arial, sans-serif; margin: 20px; line-height: 1.6; }
+          .header { border-bottom: 2px solid #4CAF50; padding-bottom: 10px; margin-bottom: 20px; }
+          .chat-message { margin: 15px 0; padding: 10px; border-radius: 6px; }
+          .user-message { background: #e8f5e8; text-align: right; }
+          .bot-message { background: #f5f5f5; }
+          .bot-message strong { color: #4CAF50; }
+          @media print { body { margin: 0; } }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <h1>🤖 Solar System AI Assistant Chat</h1>
+          <p>Conversation exported on: ${currentDate}</p>
+        </div>
+        <div class="chat-content">
+          ${chatContent}
+        </div>
+      </body>
+      </html>
+    `);
+    
+    printWindow.document.close();
+    printWindow.focus();
+    setTimeout(() => {
+      printWindow.print();
+    }, 250);
+  });
+  
+  // Enhanced input handling with paste support
+  chatTextInput.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage();
+    }
+  });
+  
+  // Enable paste functionality
+  chatTextInput.addEventListener('paste', (e) => {
+    console.log('Paste event detected');
+    // Allow default paste behavior
+  });
+  
+  // Keyboard shortcuts
+  document.addEventListener('keydown', (e) => {
+    // Ctrl+P to print (when chatbot is focused)
+    if (e.ctrlKey && e.key === 'p' && chatbot.contains(document.activeElement)) {
+      e.preventDefault();
+      chatPrint.click();
+    }
+    
+    // Ctrl+M to maximize/minimize
+    if (e.ctrlKey && e.key === 'm' && chatbot.contains(document.activeElement)) {
+      e.preventDefault();
+      chatMaximize.click();
+    }
+    
+    // Escape to minimize
+    if (e.key === 'Escape' && chatbot.contains(document.activeElement)) {
+      if (chatMaximized) {
+        chatMaximize.click();
+      } else if (chatVisible) {
+        chatToggle.click();
+      }
+    }
+  });
+  
+  // Send message on button click
+  chatSend.addEventListener('click', sendMessage);
+  
+  // Test function for debugging
+  window.testChat = function() {
+    console.log('Test chat function called');
+    addMessage('Tell me about Jupiter', true);
+    setTimeout(() => {
+      const response = generateResponse('Tell me about Jupiter');
+      addMessage(response);
+    }, 500);
+  };
+  
+  // Add context menu for copying messages
+  chatMessages.addEventListener('contextmenu', (e) => {
+    e.preventDefault();
+    
+    // Create context menu
+    const contextMenu = document.createElement('div');
+    contextMenu.style.cssText = `
+      position: fixed;
+      top: ${e.clientY}px;
+      left: ${e.clientX}px;
+      background: rgba(0,0,0,0.9);
+      border: 1px solid #333;
+      border-radius: 4px;
+      padding: 5px 0;
+      z-index: 10000;
+      color: white;
+      font-size: 12px;
+      min-width: 120px;
+    `;
+    
+    const copyOption = document.createElement('div');
+    copyOption.textContent = '📋 Copy All Text';
+    copyOption.style.cssText = `
+      padding: 8px 12px;
+      cursor: pointer;
+      border-bottom: 1px solid #333;
+    `;
+    copyOption.addEventListener('mouseover', () => copyOption.style.background = 'rgba(76, 175, 80, 0.3)');
+    copyOption.addEventListener('mouseout', () => copyOption.style.background = 'transparent');
+    copyOption.addEventListener('click', () => {
+      const allText = Array.from(chatMessages.children)
+        .map(msg => msg.textContent)
+        .join('\n\n');
+      navigator.clipboard.writeText(allText).then(() => {
+        console.log('Chat copied to clipboard');
+      });
+      document.body.removeChild(contextMenu);
+    });
+    
+    const clearOption = document.createElement('div');
+    clearOption.textContent = '🗑️ Clear Chat';
+    clearOption.style.cssText = `
+      padding: 8px 12px;
+      cursor: pointer;
+    `;
+    clearOption.addEventListener('mouseover', () => clearOption.style.background = 'rgba(255, 107, 107, 0.3)');
+    clearOption.addEventListener('mouseout', () => clearOption.style.background = 'transparent');
+    clearOption.addEventListener('click', () => {
+      if (confirm('Clear all chat messages?')) {
+        chatMessages.innerHTML = `
+          <div class="chat-message bot-message">
+            <strong>AI:</strong> Chat cleared! Ask me anything about the solar system.
+          </div>
+        `;
+      }
+      document.body.removeChild(contextMenu);
+    });
+    
+    contextMenu.appendChild(copyOption);
+    contextMenu.appendChild(clearOption);
+    document.body.appendChild(contextMenu);
+    
+    // Remove context menu when clicking elsewhere
+    setTimeout(() => {
+      document.addEventListener('click', function removeMenu() {
+        if (document.body.contains(contextMenu)) {
+          document.body.removeChild(contextMenu);
+        }
+        document.removeEventListener('click', removeMenu);
+      });
+    }, 100);
+  });
+  
+  function addMessage(message, isUser = false) {
+    const messageDiv = document.createElement('div');
+    messageDiv.className = `chat-message ${isUser ? 'user-message' : 'bot-message'}`;
+    messageDiv.innerHTML = isUser ? message : `<strong>AI:</strong> ${message}`;
+    chatMessages.appendChild(messageDiv);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+  }
+  
+  function sendMessage() {
+    const message = chatTextInput.value.trim();
+    if (!message) return;
+    
+    addMessage(message, true);
+    chatTextInput.value = '';
+    
+    // Simulate thinking delay
+    setTimeout(() => {
+      const response = generateResponse(message);
+      addMessage(response);
+    }, 500);
+  }
+  
+  function generateResponse(question) {
+    const q = question.toLowerCase();
+    
+    // Planet-specific questions
+    for (const planet of planetsData) {
+      if (q.includes(planet.name.toLowerCase())) {
+        if (q.includes('size') || q.includes('big') || q.includes('diameter')) {
+          return `${planet.name} has a diameter of ${planet.details?.diameter || 'unknown size'}. ${planet.name === 'Jupiter' ? "It's the largest planet in our solar system!" : planet.name === 'Mercury' ? "It's the smallest planet!" : ""}`;
+        }
+        if (q.includes('temperature') || q.includes('hot') || q.includes('cold')) {
+          return `${planet.name}'s temperature is ${planet.details?.temperature || 'unknown'}. ${planet.name === 'Venus' ? "It's the hottest planet due to its extreme greenhouse effect!" : planet.name === 'Mercury' ? "Despite being closest to the Sun, it has extreme temperature variations!" : ""}`;
+        }
+        if (q.includes('orbit') || q.includes('year') || q.includes('period')) {
+          return `${planet.name} takes ${planet.realPeriod} Earth days to orbit the Sun (${(planet.realPeriod/365).toFixed(1)} Earth years). ${planet.eccentricity > 0.1 ? "It has a very elliptical orbit!" : "Its orbit is nearly circular."}`;
+        }
+        if (q.includes('moon') || q.includes('satellite')) {
+          const moonInfo = {
+            'earth': 'Earth has 1 moon - our familiar Moon that causes tides and is tidally locked.',
+            'mars': 'Mars has 2 small moons: Phobos and Deimos, both captured asteroids.',
+            'jupiter': 'Jupiter has over 80 moons! The four largest are Io, Europa, Ganymede, and Callisto.',
+            'saturn': 'Saturn has over 80 moons, including Titan which is larger than Mercury!',
+            'uranus': 'Uranus has 27 known moons, all named after Shakespeare characters.',
+            'neptune': 'Neptune has 14 known moons, with Triton being the largest.',
+            'venus': 'Venus has no moons.',
+            'mercury': 'Mercury has no moons.'
+          };
+          return moonInfo[planet.name.toLowerCase()] || `${planet.name} has moons, but I don't have specific details.`;
+        }
+        // General planet info
+        return `${planet.info} ${planet.details?.facts ? planet.details.facts[0] : ''}`;
+      }
+    }
+    
+    // Moon-specific questions
+    if (q.includes('moon') && !q.includes('planet')) {
+      if (q.includes('size') || q.includes('big')) {
+        return "The Moon has a diameter of 3,474 km, about 1/4 the size of Earth. It's the 5th largest moon in our solar system!";
+      }
+      if (q.includes('distance') || q.includes('far')) {
+        return "The Moon is about 384,400 km away from Earth on average, but it's slowly moving away at 3.8 cm per year!";
+      }
+      if (q.includes('phase') || q.includes('cycle')) {
+        return "The Moon's phases cycle every 29.5 days as it orbits Earth. We always see the same side due to tidal locking!";
+      }
+      return "The Moon is Earth's only natural satellite. It's tidally locked, causes our tides, and is slowly moving away from Earth!";
+    }
+    
+    // Comet-specific questions
+    if (q.includes('comet') && !q.includes('halley')) {
+      if (q.includes('tail')) {
+        return "Comet tails are made of gas and dust that get blown away by solar wind when the comet approaches the Sun. They always point away from the Sun, not behind the comet's motion!";
+      }
+      if (q.includes('orbit')) {
+        return "Comets have highly elliptical orbits that take them far from the Sun and then very close. Most come from the Kuiper Belt or Oort Cloud at the edge of our solar system.";
+      }
+      return "Comets are 'dirty snowballs' made of ice, dust, and rock. When they approach the Sun, they develop spectacular tails of gas and dust!";
+    }
+    
+    if (q.includes('when') && q.includes('halley')) {
+      return "Halley's Comet last appeared in 1986 and will return in 2061! It's visible from Earth every 75-76 years. Mark your calendar - the next appearance will be spectacular!";
+    }
+    
+    // Comparative questions
+    if (q.includes('largest') || q.includes('biggest')) {
+      if (q.includes('planet')) return "Jupiter is the largest planet - it's so big that all other planets could fit inside it!";
+      if (q.includes('moon')) return "Ganymede (Jupiter's moon) is the largest moon in the solar system, even bigger than Mercury!";
+      return "Jupiter is the largest planet in our solar system!";
+    }
+    
+    if (q.includes('smallest')) {
+      if (q.includes('planet')) return "Mercury is the smallest planet, only slightly larger than Earth's Moon!";
+      return "Mercury is the smallest planet in our solar system!";
+    }
+    
+    if (q.includes('hottest')) {
+      return "Venus is the hottest planet at 462°C, even hotter than Mercury! This is due to its extreme greenhouse effect from thick CO2 atmosphere.";
+    }
+    
+    if (q.includes('coldest')) {
+      return "Neptune is the coldest planet with average temperatures of -200°C. Pluto, though a dwarf planet, is even colder at -230°C!";
+    }
+    
+    if (q.includes('fastest') || q.includes('quick')) {
+      return "Mercury orbits the Sun fastest, completing one orbit in just 88 Earth days! It also has the most elliptical orbit of all planets.";
+    }
+    
+    // Solar system facts
+    if (q.includes('sun')) {
+      return "The Sun contains 99.86% of the solar system's mass! It's a G-type main-sequence star that converts 600 million tons of hydrogen into helium every second through nuclear fusion.";
+    }
+    
+    if (q.includes('asteroid') || q.includes('belt')) {
+      return "The asteroid belt lies between Mars and Jupiter, containing thousands of rocky objects. The largest is Ceres, which is actually classified as a dwarf planet!";
+    }
+    
+    if (q.includes('ring')) {
+      return "Saturn has the most spectacular rings, but Jupiter, Uranus, and Neptune also have ring systems! Saturn's rings are made of ice and rock particles.";
+    }
+    
+    if (q.includes('life') || q.includes('habitable')) {
+      return "Earth is the only known planet with life! Mars may have had life in the past, and Jupiter's moon Europa and Saturn's moon Enceladus might have conditions for life in their subsurface oceans.";
+    }
+    
+    if (q.includes('season')) {
+      return "Earth's seasons are caused by its 23.5° axial tilt, not distance from the Sun! When your hemisphere tilts toward the Sun, it's summer; away from the Sun, it's winter.";
+    }
+    
+    if (q.includes('gravity')) {
+      return "Jupiter has the strongest gravity (2.36x Earth's), while Mars has weak gravity (0.38x Earth's). The Moon's gravity is only 1/6th of Earth's!";
+    }
+    
+    if (q.includes('atmosphere')) {
+      return "Venus has the thickest atmosphere (96% CO2), Mars has a thin atmosphere (95% CO2), and Earth has the perfect atmosphere for life (78% N2, 21% O2)!";
+    }
+    
+    // General responses
+    const generalResponses = [
+      "That's an interesting question! Could you be more specific about which planet or aspect of the solar system you'd like to know about?",
+      "I'd love to help! Try asking about a specific planet, moon, or solar system phenomenon. For example: 'Tell me about Jupiter's moons' or 'Why is Mars red?'",
+      "Great question! I have lots of information about planets, moons, orbits, and space phenomena. What specifically interests you?",
+      "I'm here to help with solar system questions! Try asking about planet sizes, temperatures, moons, or interesting space facts!"
+    ];
+    
+    return generalResponses[Math.floor(Math.random() * generalResponses.length)];
+  }
+  
+  // Animate the solar system
+  let clock = new THREE.Clock();
+  const timeDisplay = document.getElementById('simTime');
+  
+  function animate() {
+    requestAnimationFrame(animate);
+    const elapsed = clock.getElapsedTime();
+    
+    // Update time display (adjusted for speed multiplier)
+    const simulatedDays = Math.floor(elapsed * 10 * speedMultiplier);
+    const years = Math.floor(simulatedDays / 365);
+    const remainingDays = simulatedDays % 365;
+    timeDisplay.textContent = `Time: ${years}y ${remainingDays}d (${simulatedDays} days total)`;
+    
+    // Animate Sun with rotation and pulsing glow
+    const sun = planetMeshes[0];
+    sun.rotation.y += 0.001;
+    
+    // Make Sun's glow pulse
+    if (sun.children.length > 0) {
+      const pulseIntensity = 0.15 + Math.sin(elapsed * 2) * 0.05;
+      sun.children.forEach(child => {
+        if (child.material && child.material.opacity !== undefined) {
+          child.material.opacity = child.material.opacity > 0.15 ? 
+            0.2 + Math.sin(elapsed * 2) * 0.05 : 
+            0.1 + Math.sin(elapsed * 2) * 0.03;
+        }
+      });
+      
+      // Also pulse the Sun's emissive intensity
+      if (sun.material.emissiveIntensity !== undefined) {
+        sun.material.emissiveIntensity = 0.3 + Math.sin(elapsed * 1.5) * 0.1;
+      }
+    }
+    // Realistic elliptical orbits with inclinations
+    planetsData.forEach((planet, index) => {
+      if (planet.orbitSpeed > 0) {
+        const mesh = planetMeshes[index];
+        
+        // Skip orbital animation for selected planet (it's in isolated view)
+        if (selectedPlanet && mesh === selectedPlanet) {
+          // Only rotate the planet on its axis, don't move it
+          mesh.rotation.y += 0.02 * (planet.orbitSpeed * 10 + 0.1);
+          return;
+        }
+        
+        // Calculate mean anomaly (angle in orbit) with speed multiplier
+        const meanAnomaly = elapsed * planet.orbitSpeed * speedMultiplier;
+        
+        // Debug: Log speed multiplier occasionally
+        if (elapsed % 2 < 0.1 && index === 1) { // Log for Mercury every 2 seconds
+          console.log(`Speed multiplier: ${speedMultiplier}, Planet: ${planet.name}, Mean anomaly: ${meanAnomaly.toFixed(3)}`);
+        }
+        
+        // Solve Kepler's equation for eccentric anomaly (simplified)
+        let eccentricAnomaly = meanAnomaly;
+        for (let i = 0; i < 5; i++) {
+          eccentricAnomaly = meanAnomaly + planet.eccentricity * Math.sin(eccentricAnomaly);
+        }
+        
+        // Calculate true anomaly (actual angle from perihelion)
+        const trueAnomaly = 2 * Math.atan2(
+          Math.sqrt(1 + planet.eccentricity) * Math.sin(eccentricAnomaly / 2),
+          Math.sqrt(1 - planet.eccentricity) * Math.cos(eccentricAnomaly / 2)
+        );
+        
+        // Calculate distance from Sun (varies with elliptical orbit)
+        const distance = planet.semiMajorAxis * (1 - planet.eccentricity * Math.cos(eccentricAnomaly));
+        
+        // Position in orbital plane
+        const x = distance * Math.cos(trueAnomaly);
+        const y = distance * Math.sin(trueAnomaly);
+        
+        // Apply orbital inclination
+        const inclinationRad = planet.inclination * Math.PI / 180;
+        mesh.position.x = x;
+        mesh.position.y = y * Math.sin(inclinationRad);
+        mesh.position.z = y * Math.cos(inclinationRad);
+        
+        // Debug: Log outer planet positions occasionally
+        if (elapsed % 5 < 0.1 && (planet.name === "Jupiter" || planet.name === "Saturn")) {
+          console.log(`${planet.name}: distance=${distance.toFixed(1)}, position=(${x.toFixed(1)}, ${mesh.position.y.toFixed(1)}, ${mesh.position.z.toFixed(1)})`);
+        }
+        
+        // Rotate planet on own axis (faster rotation for closer planets)
+        mesh.rotation.y += 0.02 * (planet.orbitSpeed * 10 + 0.1);
+      }
+    });
+    
+    // Camera following logic
+    if (followingPlanet !== null && planetMeshes[followingPlanet]) {
+      const targetPlanet = planetMeshes[followingPlanet];
+      
+      // Handle Moon differently since it's a child of Earth
+      if (targetPlanet.userData && targetPlanet.userData.name === "Moon") {
+        // Get Moon's world position (since it's a child of Earth)
+        const worldPos = new THREE.Vector3();
+        targetPlanet.getWorldPosition(worldPos);
+        
+        // Camera settings for Moon
+        const distance = 6 / followingZoomLevel; // Apply zoom to Moon distance
+        const height = 3 / followingZoomLevel;   // Apply zoom to Moon height
+        
+        camera.position.x = worldPos.x + distance;
+        camera.position.y = worldPos.y + height;
+        camera.position.z = worldPos.z + distance;
+        controls.target.copy(worldPos);
+      } else {
+        // Handle regular planets
+        const planetData = planetsData[followingPlanet];
+        if (planetData) {
+          // Calculate camera position relative to planet
+          let distance, height;
+          
+          if (planetData.name === "Halley's Comet") {
+            // Special handling for comet - use larger distance despite small size
+            distance = 15 / followingZoomLevel; // Apply zoom to comet distance
+            height = 8 / followingZoomLevel;    // Apply zoom to comet height
+          } else {
+            // Regular planet distance calculation
+            distance = (planetData.size * 8) / followingZoomLevel; // Apply zoom to distance
+            height = (planetData.size * 4) / followingZoomLevel;   // Apply zoom to height
+          }
+          
+          // Position camera to follow the planet
+          const targetPos = targetPlanet.position.clone();
+          camera.position.x = targetPos.x + distance;
+          camera.position.y = targetPos.y + height;
+          camera.position.z = targetPos.z + distance;
+          
+          // Look at the planet
+          controls.target.copy(targetPos);
+        }
+      }
+    }
+
+    // Animate Moon orbiting Earth (unless Moon is selected for isolated view)
+    if (moon && earth) {
+      if (selectedPlanet && selectedPlanet === moon) {
+        // Moon is selected - only rotate on axis, don't orbit
+        moon.rotation.y += 0.005;
+      } else {
+        // Normal Moon orbital animation
+        const moonAngle = elapsed * 0.1 * speedMultiplier; // Moon orbits with speed control
+        moon.position.x = Math.cos(moonAngle) * 8;
+        moon.position.z = Math.sin(moonAngle) * 8;
+        moon.rotation.y += 0.005;
+        
+        // Debug: Log Moon position occasionally
+        if (elapsed % 3 < 0.1) {
+          console.log(`Moon position: (${moon.position.x.toFixed(1)}, ${moon.position.y.toFixed(1)}, ${moon.position.z.toFixed(1)})`);
+        }
+      }
+    } else if (elapsed % 3 < 0.1) {
+      console.log('Moon or Earth not found for animation. Moon:', !!moon, 'Earth:', !!earth);
+    }
+    controls.update();
+    renderer.render(scene, camera);
+  }
+  animate();
+  // Responsive
+  window.addEventListener('resize', () => {
+    camera.aspect = window.innerWidth/window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+  });
+</script>
+</body>
+</html>

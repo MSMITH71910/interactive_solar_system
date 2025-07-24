@@ -1,0 +1,38 @@
+{
+  "name": "interactive-solar-system",
+  "version": "1.0.0",
+  "description": "An immersive, educational 3D solar system simulation with realistic orbital mechanics and AI chatbot guide",
+  "main": "index.html",
+  "scripts": {
+    "start": "python -m http.server 8080",
+    "dev": "python -m http.server 8080",
+    "serve": "python -m http.server 8080"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/MSMITH71910/interactive_solar_system.git"
+  },
+  "keywords": [
+    "solar-system",
+    "astronomy",
+    "education",
+    "3d",
+    "threejs",
+    "planets",
+    "space",
+    "interactive",
+    "simulation",
+    "webgl"
+  ],
+  "author": "MSMITH71910",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/MSMITH71910/interactive_solar_system/issues"
+  },
+  "homepage": "https://github.com/MSMITH71910/interactive_solar_system#readme",
+  "dependencies": {},
+  "devDependencies": {},
+  "engines": {
+    "node": ">=14.0.0"
+  }
+}

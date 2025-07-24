@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Simple Solar System Test</title>
+  <style>
+    body, html {
+      margin: 0; padding: 0; overflow: hidden; font-family: Arial, sans-serif;
+      background-color: black; color: white;
+    }
+    #infoBox {
+      position: fixed; top: 10px; left: 10px;
+      background: rgba(0,0,0,0.7); padding: 10px;
+      max-width: 250px; border-radius: 5px;
+      font-size: 14px; pointer-events: none;
+    }
+    #status {
+      position: fixed; top: 10px; right: 10px;
+      background: rgba(0,0,0,0.7); padding: 10px;
+      border-radius: 5px; font-size: 12px;
+    }
+    canvas { display: block; }
+  </style>
+</head>
+<body>
+<div id="infoBox">Loading Solar System...</div>
+<div id="status">
+  <div>Three.js Status: <span id="threejs-status">Loading...</span></div>
+  <div>Controls Status: <span id="controls-status">Loading...</span></div>
+</div>
+
+<script src="./js/three.min.js"></script>
+<script src="./js/OrbitControls.js"></script>
+<script>
+  // Status updates
+  const threeStatus = document.getElementById('threejs-status');
+  const controlsStatus = document.getElementById('controls-status');
+  const infoBox = document.getElementById('infoBox');
+
+  if (typeof THREE !== 'undefined') {
+    threeStatus.textContent = '✅ Loaded';
+    threeStatus.style.color = '#51cf66';
+  } else {
+    threeStatus.textContent = '❌ Failed';
+    threeStatus.style.color = '#ff6b6b';
+    infoBox.innerHTML = 'ERROR: Three.js failed to load. Check console for details.';
+  }
+
+  if (typeof THREE !== 'undefined' && THREE.OrbitControls) {
+    controlsStatus.textContent = '✅ Loaded';
+    controlsStatus.style.color = '#51cf66';
+  } else {
+    controlsStatus.textContent = '❌ Failed';
+    controlsStatus.style.color = '#ff6b6b';
+  }
+
+  if (typeof THREE !== 'undefined') {
+    try {
+      // Scene setup
+      const scene = new THREE.Scene();
+      const camera = new THREE.PerspectiveCamera(45, window.innerWidth/window.innerHeight, 0.1, 2000);
+      camera.position.set(0, 50, 150);
+      
+      const renderer = new THREE.WebGLRenderer({antialias:true});
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      document.body.appendChild(renderer.domElement);
+      
+      // Controls
+      let controls;
+      if (THREE.OrbitControls) {
+        controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls.minDistance = 20;
+        controls.maxDistance = 500;
+      }
+      
+      // Lights
+      const sunLight = new THREE.PointLight(0xffffff, 2, 1000);
+      scene.add(sunLight);
+      const ambient = new THREE.AmbientLight(0x222222);
+      scene.add(ambient);
+      
+      // Create simple planets without textures first
+      const planets = [];
+      const planetData = [
+        { name: "Sun", size: 15, color: 0xffff00, distance: 0 },
+        { name: "Mercury", size: 1.5, color: 0x8c7853, distance: 25 },
+        { name: "Venus", size: 3.5, color: 0xffc649, distance: 35 },
+        { name: "Earth", size: 4, color: 0x6b93d6, distance: 45 },
+        { name: "Mars", size: 2.5, color: 0xc1440e, distance: 55 },
+        { name: "Jupiter", size: 10, color: 0xd8ca9d, distance: 70 },
+        { name: "Saturn", size: 9, color: 0xfad5a5, distance: 85 },
+        { name: "Uranus", size: 7, color: 0x4fd0e7, distance: 100 },
+        { name: "Neptune", size: 7, color: 0x4b70dd, distance: 115 }
+      ];
+      
+      planetData.forEach(planet => {
+        const geometry = new THREE.SphereGeometry(planet.size, 32, 32);
+        const material = new THREE.MeshStandardMaterial({ color: planet.color });
+        const mesh = new THREE.Mesh(geometry, material);
+        mesh.position.set(planet.distance, 0, 0);
+        mesh.userData = { name: planet.name, distance: planet.distance };
+        scene.add(mesh);
+        planets.push(mesh);
+      });
+      
+      // Add Saturn rings
+      const saturn = planets.find(p => p.userData.name === "Saturn");
+      if (saturn) {
+        const ringGeometry = new THREE.RingGeometry(10, 14, 64);
+        const ringMaterial = new THREE.MeshBasicMaterial({
+          color: 0xCCCC99, 
+          side: THREE.DoubleSide, 
+          opacity: 0.6, 
+          transparent: true
+        });
+        const ring = new THREE.Mesh(ringGeometry, ringMaterial);
+        ring.rotation.x = Math.PI / 2;
+        saturn.add(ring);
+      }
+      
+      // Animation
+      const clock = new THREE.Clock();
+      function animate() {
+        requestAnimationFrame(animate);
+        const elapsed = clock.getElapsedTime();
+        
+        // Rotate planets
+        planets.forEach((planet, index) => {
+          if (planet.userData.distance > 0) {
+            const speed = 0.01 / (planet.userData.distance * 0.01);
+            const angle = elapsed * speed;
+            planet.position.x = Math.cos(angle) * planet.userData.distance;
+            planet.position.z = Math.sin(angle) * planet.userData.distance;
+          }
+          planet.rotation.y += 0.01;
+        });
+        
+        if (controls) controls.update();
+        renderer.render(scene, camera);
+      }
+      
+      animate();
+      infoBox.innerHTML = '🌟 Solar System loaded! Use mouse to navigate.<br>• Left drag: Rotate<br>• Right drag: Pan<br>• Scroll: Zoom';
+      
+      // Responsive
+      window.addEventListener('resize', () => {
+        camera.aspect = window.innerWidth/window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+      });
+      
+    } catch (error) {
+      infoBox.innerHTML = 'ERROR: ' + error.message;
+      console.error('Solar System Error:', error);
+    }
+  }
+</script>
+</body>
+</html>

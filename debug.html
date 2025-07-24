@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Solar System Debug</title>
+  <style>
+    body, html {
+      margin: 0; padding: 0; font-family: Arial, sans-serif;
+      background-color: black; color: white;
+    }
+    #debug-info {
+      position: fixed; top: 10px; right: 10px;
+      background: rgba(0,0,0,0.8); padding: 15px;
+      max-width: 300px; border-radius: 5px;
+      font-size: 12px; z-index: 1000;
+    }
+    #infoBox {
+      position: fixed; top: 10px; left: 10px;
+      background: rgba(0,0,0,0.7); padding: 10px;
+      max-width: 250px; border-radius: 5px;
+      font-size: 14px; pointer-events: none;
+    }
+    canvas { display: block; }
+    .error { color: #ff6b6b; }
+    .success { color: #51cf66; }
+    .warning { color: #ffd43b; }
+  </style>
+</head>
+<body>
+<div id="infoBox">Click on a planet to learn more!</div>
+<div id="debug-info">
+  <h3>Debug Information:</h3>
+  <div id="debug-log"></div>
+</div>
+
+<script>
+  const debugLog = document.getElementById('debug-log');
+  
+  function log(message, type = 'info') {
+    const div = document.createElement('div');
+    div.className = type;
+    div.innerHTML = `${new Date().toLocaleTimeString()}: ${message}`;
+    debugLog.appendChild(div);
+    console.log(message);
+  }
+
+  log('Starting Solar System...', 'info');
+
+  // Check if Three.js is available
+  if (typeof THREE === 'undefined') {
+    log('ERROR: Three.js not loaded!', 'error');
+  } else {
+    log('Three.js loaded successfully', 'success');
+  }
+</script>
+
+<script src="./js/three.min.js"></script>
+<script src="./js/OrbitControls.js"></script>
+
+<script>
+  // Check Three.js after loading
+  if (typeof THREE === 'undefined') {
+    log('ERROR: Three.js failed to load from CDN!', 'error');
+    log('Try refreshing the page or check internet connection', 'warning');
+  } else {
+    log('Three.js version: ' + THREE.REVISION, 'success');
+  }
+
+  if (typeof THREE !== 'undefined' && THREE.OrbitControls) {
+    log('OrbitControls loaded successfully', 'success');
+  } else if (typeof THREE !== 'undefined') {
+    log('WARNING: OrbitControls not loaded', 'warning');
+  }
+
+  try {
+    // Scene setup
+    log('Creating scene...', 'info');
+    const scene = new THREE.Scene();
+    
+    log('Creating camera...', 'info');
+    const camera = new THREE.PerspectiveCamera(45, window.innerWidth/window.innerHeight, 0.1, 2000);
+    camera.position.set(0, 50, 150);
+    
+    log('Creating renderer...', 'info');
+    const renderer = new THREE.WebGLRenderer({antialias:true});
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    document.body.appendChild(renderer.domElement);
+    log('Renderer added to DOM', 'success');
+    
+    // Controls
+    if (THREE.OrbitControls) {
+      log('Setting up controls...', 'info');
+      const controls = new THREE.OrbitControls(camera, renderer.domElement);
+      controls.minDistance = 20;
+      controls.maxDistance = 500;
+      log('Controls setup complete', 'success');
+    }
+    
+    // Light
+    log('Adding lights...', 'info');
+    const sunLight = new THREE.PointLight(0xffffff, 2, 1000);
+    scene.add(sunLight);
+    const ambient = new THREE.AmbientLight(0x222222);
+    scene.add(ambient);
+    
+    // Test with a simple cube first
+    log('Creating test cube...', 'info');
+    const geometry = new THREE.BoxGeometry(10, 10, 10);
+    const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
+    const cube = new THREE.Mesh(geometry, material);
+    scene.add(cube);
+    log('Test cube added', 'success');
+    
+    // Test texture loading
+    log('Testing texture loading...', 'info');
+    const loader = new THREE.TextureLoader();
+    
+    // Test loading one texture
+    loader.load(
+      './assets/textures/EarthTexture.jpg',
+      function(texture) {
+        log('Earth texture loaded successfully!', 'success');
+        // Apply texture to cube
+        cube.material = new THREE.MeshBasicMaterial({ map: texture });
+      },
+      function(progress) {
+        log('Loading Earth texture: ' + Math.round((progress.loaded / progress.total) * 100) + '%', 'info');
+      },
+      function(error) {
+        log('ERROR loading Earth texture: ' + error, 'error');
+        log('Check if file exists at: ./assets/textures/EarthTexture.jpg', 'warning');
+      }
+    );
+    
+    // Animation loop
+    log('Starting animation loop...', 'info');
+    function animate() {
+      requestAnimationFrame(animate);
+      
+      // Rotate the cube
+      cube.rotation.x += 0.01;
+      cube.rotation.y += 0.01;
+      
+      if (THREE.OrbitControls && controls) {
+        controls.update();
+      }
+      renderer.render(scene, camera);
+    }
+    animate();
+    log('Animation started successfully!', 'success');
+    
+    // Responsive
+    window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth/window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+    
+  } catch (error) {
+    log('CRITICAL ERROR: ' + error.message, 'error');
+    console.error('Full error:', error);
+  }
+</script>
+</body>
+</html>

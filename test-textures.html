@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Texture Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; background: #222; color: white; }
+        .texture-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; }
+        .texture-item { text-align: center; }
+        .texture-item img { width: 150px; height: 75px; object-fit: cover; border: 2px solid #555; border-radius: 5px; }
+        .texture-item h3 { margin: 10px 0 5px 0; }
+    </style>
+</head>
+<body>
+    <h1>Solar System Texture Test</h1>
+    <p>This page tests if all texture files are loading correctly:</p>
+    
+    <div class="texture-grid">
+        <div class="texture-item">
+            <h3>Sun</h3>
+            <img src="./assets/textures/SunTexture.jpg" alt="Sun" onerror="this.style.border='2px solid red'">
+        </div>
+        <div class="texture-item">
+            <h3>Mercury</h3>
+            <img src="./assets/textures/MercuryTexture.jpg" alt="Mercury" onerror="this.style.border='2px solid red'">
+        </div>
+        <div class="texture-item">
+            <h3>Venus</h3>
+            <img src="./assets/textures/VenusTexture.jpg" alt="Venus" onerror="this.style.border='2px solid red'">
+        </div>
+        <div class="texture-item">
+            <h3>Earth</h3>
+            <img src="./assets/textures/EarthTexture.jpg" alt="Earth" onerror="this.style.border='2px solid red'">
+        </div>
+        <div class="texture-item">
+            <h3>Mars</h3>
+            <img src="./assets/textures/MarsTexture.jpg" alt="Mars" onerror="this.style.border='2px solid red'">
+        </div>
+        <div class="texture-item">
+            <h3>Jupiter</h3>
+            <img src="./assets/textures/JupiterTexture.jpg" alt="Jupiter" onerror="this.style.border='2px solid red'">
+        </div>
+        <div class="texture-item">
+            <h3>Saturn</h3>
+            <img src="./assets/textures/SaturnTexture.jpg" alt="Saturn" onerror="this.style.border='2px solid red'">
+        </div>
+        <div class="texture-item">
+            <h3>Uranus</h3>
+            <img src="./assets/textures/UranusTexture.jpg" alt="Uranus" onerror="this.style.border='2px solid red'">
+        </div>
+        <div class="texture-item">
+            <h3>Neptune</h3>
+            <img src="./assets/textures/NeptuneTexture.jpg" alt="Neptune" onerror="this.style.border='2px solid red'">
+        </div>
+        <div class="texture-item">
+            <h3>Pluto</h3>
+            <img src="./assets/textures/PlutoTexture.jpg" alt="Pluto" onerror="this.style.border='2px solid red'">
+        </div>
+        <div class="texture-item">
+            <h3>Moon</h3>
+            <img src="./assets/textures/MoonTexture.jpg" alt="Moon" onerror="this.style.border='2px solid red'">
+        </div>
+        <div class="texture-item">
+            <h3>Space Background</h3>
+            <img src="./assets/textures/SpaceTexture.jpg" alt="Space" onerror="this.style.border='2px solid red'">
+        </div>
+    </div>
+    
+    <p style="margin-top: 30px;">
+        <strong>Note:</strong> Images with red borders failed to load. Make sure all texture files are in the correct location.
+    </p>
+    
+    <p>
+        <a href="index.html" style="color: #4CAF50;">← Back to Solar System</a>
+    </p>
+</body>
+</html>
