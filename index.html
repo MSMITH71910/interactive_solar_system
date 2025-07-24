@@ -232,7 +232,7 @@
     #chatSend:hover {
       background: #45a049;
     }
-    #chatToggle, #chatMaximize, #chatPrint {
+    #chatToggle, #chatMaximize, #chatPrint, #chatCopy {
       background: none;
       border: none;
       color: white;
@@ -243,7 +243,7 @@
       border-radius: 3px;
       transition: background 0.2s;
     }
-    #chatToggle:hover, #chatMaximize:hover, #chatPrint:hover {
+    #chatToggle:hover, #chatMaximize:hover, #chatPrint:hover, #chatCopy:hover {
       background: rgba(255,255,255,0.2);
     }
     .chat-message {
@@ -329,6 +329,7 @@
   <div id="chatHeader">
     🤖 Solar System AI Assistant
     <div>
+      <button id="chatCopy" title="Copy Chat Text">📋</button>
       <button id="chatPrint" title="Print Chat">🖨️</button>
       <button id="chatMaximize" title="Maximize">⬜</button>
       <button id="chatToggle" title="Minimize">−</button>
@@ -1351,6 +1352,7 @@
   const chatToggle = document.getElementById('chatToggle');
   const chatMaximize = document.getElementById('chatMaximize');
   const chatPrint = document.getElementById('chatPrint');
+  const chatCopy = document.getElementById('chatCopy');
   
   // Debug: Check if chatbot elements exist
   console.log('Chatbot elements found:', {
@@ -1360,7 +1362,8 @@
     chatSend: !!chatSend,
     chatToggle: !!chatToggle,
     chatMaximize: !!chatMaximize,
-    chatPrint: !!chatPrint
+    chatPrint: !!chatPrint,
+    chatCopy: !!chatCopy
   });
   
   let chatVisible = true;
@@ -1423,44 +1426,207 @@
     }
   });
   
-  // Print chatbot conversation
+  // Print chatbot conversation with enhanced error handling
   chatPrint.addEventListener('click', () => {
-    const printWindow = window.open('', '_blank');
+    try {
+      console.log('Print button clicked - attempting to print chat...');
+      
+      // Check if there's any chat content to print
+      const chatContent = chatMessages.innerHTML;
+      if (!chatContent || chatContent.trim() === '') {
+        alert('No chat content to print!');
+        return;
+      }
+      
+      // Try to open popup window
+      const printWindow = window.open('', '_blank', 'width=800,height=600');
+      
+      // Check if popup was blocked
+      if (!printWindow || printWindow.closed || typeof printWindow.closed === 'undefined') {
+        console.warn('Popup blocked - using fallback method');
+        // Fallback: Create a temporary div and print the current page
+        printChatFallback();
+        return;
+      }
+      
+      const currentDate = new Date().toLocaleString();
+      
+      printWindow.document.write(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <title>Solar System AI Chat - ${currentDate}</title>
+          <style>
+            body { font-family: Arial, sans-serif; margin: 20px; line-height: 1.6; }
+            .header { border-bottom: 2px solid #4CAF50; padding-bottom: 10px; margin-bottom: 20px; }
+            .chat-message { margin: 15px 0; padding: 10px; border-radius: 6px; }
+            .user-message { background: #e8f5e8; text-align: right; }
+            .bot-message { background: #f5f5f5; }
+            .bot-message strong { color: #4CAF50; }
+            @media print { body { margin: 0; } }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <h1>🤖 Solar System AI Assistant Chat</h1>
+            <p>Conversation exported on: ${currentDate}</p>
+          </div>
+          <div class="chat-content">
+            ${chatContent}
+          </div>
+          <script>
+            window.onload = function() {
+              setTimeout(() => {
+                window.print();
+                setTimeout(() => window.close(), 1000);
+              }, 500);
+            };
+          </script>
+        </body>
+        </html>
+      `);
+      
+      printWindow.document.close();
+      console.log('Print window created successfully');
+      
+    } catch (error) {
+      console.error('Print error:', error);
+      alert('Print failed. Please check if popups are blocked or try copying the chat text manually.');
+    }
+  });
+  
+  // Fallback print function for when popups are blocked
+  function printChatFallback() {
     const chatContent = chatMessages.innerHTML;
     const currentDate = new Date().toLocaleString();
     
-    printWindow.document.write(`
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <title>Solar System AI Chat - ${currentDate}</title>
-        <style>
-          body { font-family: Arial, sans-serif; margin: 20px; line-height: 1.6; }
-          .header { border-bottom: 2px solid #4CAF50; padding-bottom: 10px; margin-bottom: 20px; }
-          .chat-message { margin: 15px 0; padding: 10px; border-radius: 6px; }
-          .user-message { background: #e8f5e8; text-align: right; }
-          .bot-message { background: #f5f5f5; }
-          .bot-message strong { color: #4CAF50; }
-          @media print { body { margin: 0; } }
-        </style>
-      </head>
-      <body>
-        <div class="header">
-          <h1>🤖 Solar System AI Assistant Chat</h1>
-          <p>Conversation exported on: ${currentDate}</p>
-        </div>
-        <div class="chat-content">
-          ${chatContent}
-        </div>
-      </body>
-      </html>
-    `);
+    // Create a temporary print-friendly version
+    const printDiv = document.createElement('div');
+    printDiv.innerHTML = `
+      <div style="font-family: Arial, sans-serif; line-height: 1.6;">
+        <h1>🤖 Solar System AI Assistant Chat</h1>
+        <p>Conversation exported on: ${currentDate}</p>
+        <hr>
+        ${chatContent}
+      </div>
+    `;
     
-    printWindow.document.close();
-    printWindow.focus();
+    // Hide everything else temporarily
+    const originalDisplay = document.body.style.display;
+    const originalContent = document.body.innerHTML;
+    
+    document.body.innerHTML = printDiv.innerHTML;
+    
+    // Add print styles
+    const printStyle = document.createElement('style');
+    printStyle.innerHTML = `
+      @media print {
+        body { margin: 0; font-size: 12pt; }
+        .chat-message { margin: 10px 0; padding: 8px; border: 1px solid #ccc; }
+        .user-message { text-align: right; background: #f0f0f0; }
+        .bot-message { background: #f9f9f9; }
+      }
+    `;
+    document.head.appendChild(printStyle);
+    
+    // Print
+    window.print();
+    
+    // Restore original content after a delay
     setTimeout(() => {
-      printWindow.print();
-    }, 250);
+      document.body.innerHTML = originalContent;
+      document.head.removeChild(printStyle);
+      // Re-initialize event listeners (this is a limitation of this approach)
+      location.reload();
+    }, 1000);
+  }
+  
+  // Copy chat conversation to clipboard
+  chatCopy.addEventListener('click', async () => {
+    try {
+      console.log('Copy button clicked - attempting to copy chat...');
+      
+      // Get chat content and convert to plain text
+      const chatContent = chatMessages.innerHTML;
+      if (!chatContent || chatContent.trim() === '') {
+        alert('No chat content to copy!');
+        return;
+      }
+      
+      // Convert HTML to plain text
+      const tempDiv = document.createElement('div');
+      tempDiv.innerHTML = chatContent;
+      
+      // Extract text content with better formatting
+      let plainText = '';
+      const messages = tempDiv.querySelectorAll('.chat-message');
+      
+      messages.forEach(message => {
+        if (message.classList.contains('user-message')) {
+          plainText += 'You: ' + message.textContent.trim() + '\n\n';
+        } else if (message.classList.contains('bot-message')) {
+          // Remove "AI:" prefix if it exists and clean up
+          let botText = message.textContent.trim();
+          if (botText.startsWith('AI:')) {
+            botText = botText.substring(3).trim();
+          }
+          plainText += 'AI Assistant: ' + botText + '\n\n';
+        }
+      });
+      
+      // Add header
+      const currentDate = new Date().toLocaleString();
+      const fullText = `🤖 Solar System AI Assistant Chat\nExported on: ${currentDate}\n\n${plainText}`;
+      
+      // Try to copy to clipboard
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(fullText);
+        
+        // Show success feedback
+        const originalText = chatCopy.innerHTML;
+        chatCopy.innerHTML = '✅';
+        chatCopy.style.color = '#4CAF50';
+        setTimeout(() => {
+          chatCopy.innerHTML = originalText;
+          chatCopy.style.color = 'white';
+        }, 2000);
+        
+        console.log('Chat copied to clipboard successfully');
+      } else {
+        // Fallback for older browsers
+        const textArea = document.createElement('textarea');
+        textArea.value = fullText;
+        textArea.style.position = 'fixed';
+        textArea.style.left = '-999999px';
+        textArea.style.top = '-999999px';
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        
+        try {
+          document.execCommand('copy');
+          textArea.remove();
+          
+          // Show success feedback
+          const originalText = chatCopy.innerHTML;
+          chatCopy.innerHTML = '✅';
+          chatCopy.style.color = '#4CAF50';
+          setTimeout(() => {
+            chatCopy.innerHTML = originalText;
+            chatCopy.style.color = 'white';
+          }, 2000);
+          
+          console.log('Chat copied to clipboard using fallback method');
+        } catch (err) {
+          textArea.remove();
+          throw err;
+        }
+      }
+      
+    } catch (error) {
+      console.error('Copy error:', error);
+      alert('Failed to copy chat. Please select and copy the text manually.');
+    }
   });
   
   // Enhanced input handling with paste support

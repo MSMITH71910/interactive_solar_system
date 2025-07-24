@@ -6,7 +6,8 @@
   "scripts": {
     "start": "python -m http.server 8080",
     "dev": "python -m http.server 8080",
-    "serve": "python -m http.server 8080"
+    "serve": "python -m http.server 8080",
+    "build": "echo 'No build process needed for static site' && exit 0"
   },
   "repository": {
     "type": "git",
