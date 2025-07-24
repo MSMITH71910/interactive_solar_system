@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <meta name="description" content="Explore our solar system in 3D! Interactive educational simulation featuring all planets, Halley's Comet, realistic orbital mechanics, and an AI chatbot guide. Perfect for astronomy education." />
   <meta name="keywords" content="solar system, planets, astronomy, education, 3D simulation, Three.js, interactive, space, Halley's comet, educational tool" />
   <meta name="author" content="MSMITH71910" />
@@ -269,6 +269,169 @@
     canvas {
       display: block; /* removes scrollbar */
     }
+    
+    /* Mobile-specific styles */
+    @media (max-width: 768px) {
+      /* Mobile control panel - collapsible */
+      #controlPanel {
+        left: 5px;
+        top: 5px;
+        width: calc(100vw - 20px);
+        max-width: 350px;
+        max-height: 40vh;
+        font-size: 12px;
+        padding: 10px;
+        transition: transform 0.3s ease;
+      }
+      
+      #controlPanel.collapsed {
+        transform: translateY(-85%);
+      }
+      
+      #controlPanel h3 {
+        margin: 0 0 8px 0;
+        font-size: 14px;
+        cursor: pointer;
+        user-select: none;
+      }
+      
+      #controlPanel h3:after {
+        content: " ▼";
+        float: right;
+        transition: transform 0.3s ease;
+      }
+      
+      #controlPanel.collapsed h3:after {
+        transform: rotate(-90deg);
+      }
+      
+      /* Hide info box on mobile to save space */
+      #infoBox {
+        display: none;
+      }
+      
+      /* Mobile time display */
+      #timeDisplay {
+        top: 5px;
+        right: 5px;
+        font-size: 10px;
+        padding: 5px 8px;
+      }
+      
+      /* Mobile planet view */
+      #planetView {
+        right: 5px;
+        bottom: 5px;
+        left: 5px;
+        width: auto;
+        height: auto;
+        max-height: 50vh;
+        padding: 10px;
+        font-size: 12px;
+      }
+      
+      /* Mobile chatbot */
+      #chatbot {
+        right: 5px;
+        bottom: 5px;
+        width: calc(100vw - 20px);
+        max-width: 350px;
+        height: 250px;
+        font-size: 12px;
+      }
+      
+      #chatbot.maximized {
+        width: calc(100vw - 10px);
+        height: calc(100vh - 10px);
+        right: 5px;
+        bottom: 5px;
+        top: 5px;
+        left: 5px;
+      }
+      
+      #chatMessages {
+        font-size: 11px;
+      }
+      
+      #chatTextInput {
+        font-size: 12px;
+        padding: 8px;
+      }
+      
+      #chatSend {
+        padding: 8px 12px;
+        font-size: 12px;
+      }
+      
+      /* Mobile planet buttons */
+      .planet-button {
+        padding: 6px;
+        font-size: 12px;
+        margin: 2px 0;
+      }
+      
+      /* Mobile speed control */
+      #speedSlider {
+        height: 25px;
+      }
+      
+      /* Mobile instructions */
+      #controlPanel .instructions {
+        font-size: 10px;
+        margin-top: 10px;
+      }
+      
+      .mobile-only {
+        display: block !important;
+      }
+    }
+    
+    /* Tablet styles */
+    @media (min-width: 769px) and (max-width: 1024px) {
+      #controlPanel {
+        width: 250px;
+        font-size: 13px;
+      }
+      
+      #infoBox {
+        left: 270px;
+        max-width: 250px;
+        font-size: 13px;
+      }
+      
+      #chatbot {
+        width: 280px;
+        height: 300px;
+      }
+    }
+    
+    /* Touch-friendly improvements */
+    @media (hover: none) and (pointer: coarse) {
+      .planet-button {
+        min-height: 44px; /* iOS recommended touch target */
+        padding: 10px 8px;
+      }
+      
+      #chatToggle, #chatMaximize, #chatPrint, #chatCopy {
+        min-width: 44px;
+        min-height: 44px;
+        padding: 8px;
+      }
+      
+      #speedSlider {
+        height: 30px;
+      }
+      
+      #speedSlider::-webkit-slider-thumb {
+        width: 30px;
+        height: 30px;
+      }
+      
+      #speedSlider::-moz-range-thumb {
+        width: 30px;
+        height: 30px;
+      }
+    }
   </style>
 </head>
 <body>
@@ -304,10 +467,11 @@
     <button class="planet-button" data-planet="Halley's Comet">☄️ Halley's Comet</button>
   </div>
   
-  <div style="margin-top: 15px; font-size: 12px; color: #888;">
-    <div>• Use mouse to navigate</div>
-    <div>• Click planets for close-up view</div>
+  <div class="instructions" style="margin-top: 15px; font-size: 12px; color: #888;">
+    <div>• Use mouse/touch to navigate</div>
+    <div>• Tap planets for close-up view</div>
     <div>• Adjust speed with slider</div>
+    <div class="mobile-only" style="display: none;">• Tap title to collapse panel</div>
   </div>
 </div>
 
@@ -366,6 +530,37 @@
   const controls = new THREE.OrbitControls(camera, renderer.domElement);
   controls.minDistance = 20;
   controls.maxDistance = 500;
+  
+  // Mobile-specific optimizations
+  const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+  const isTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+  
+  if (isMobile || isTouch) {
+    // Enable touch controls
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.1;
+    controls.rotateSpeed = 0.5;
+    controls.zoomSpeed = 0.8;
+    controls.panSpeed = 0.8;
+    
+    // Reduce quality for better performance on mobile
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    
+    // Add mobile control panel collapse functionality
+    const controlPanel = document.getElementById('controlPanel');
+    const controlTitle = controlPanel.querySelector('h3');
+    
+    controlTitle.addEventListener('click', () => {
+      controlPanel.classList.toggle('collapsed');
+    });
+    
+    // Start with panel collapsed on small screens
+    if (window.innerWidth < 768) {
+      controlPanel.classList.add('collapsed');
+    }
+    
+    console.log('Mobile optimizations enabled');
+  }
   // Enhanced Sun Lighting
   const sunLight = new THREE.PointLight(0xffffff, 4, 2000); // Much brighter and farther reach
   sunLight.position.set(0, 0, 0);
@@ -381,6 +576,16 @@
   const ambient = new THREE.AmbientLight(0x111111);
   scene.add(ambient);
   const loader = new THREE.TextureLoader();
+  
+  // Mobile performance optimizations
+  if (isMobile || isTouch) {
+    // Reduce shadow quality on mobile
+    renderer.shadowMap.enabled = false; // Disable shadows for better performance
+    
+    // Optimize texture loading for mobile
+    loader.crossOrigin = 'anonymous';
+  }
+  
   // Local texture files
   const textures = {
     sun: './assets/textures/SunTexture.jpg',
@@ -2061,11 +2266,93 @@
     renderer.render(scene, camera);
   }
   animate();
+  
+  // Mobile-specific event handling
+  if (isMobile || isTouch) {
+    // Add touch event handling for planet selection
+    renderer.domElement.addEventListener('touchstart', (event) => {
+      event.preventDefault();
+      
+      if (event.touches.length === 1) {
+        const touch = event.touches[0];
+        const mouse = new THREE.Vector2();
+        mouse.x = (touch.clientX / window.innerWidth) * 2 - 1;
+        mouse.y = -(touch.clientY / window.innerHeight) * 2 + 1;
+        
+        const raycaster = new THREE.Raycaster();
+        raycaster.setFromCamera(mouse, camera);
+        
+        const intersects = raycaster.intersectObjects(planetMeshes.filter(mesh => mesh));
+        if (intersects.length > 0) {
+          const clickedPlanet = intersects[0].object;
+          const planetIndex = planetMeshes.indexOf(clickedPlanet);
+          if (planetIndex !== -1) {
+            const planetData = planetsData[planetIndex];
+            if (planetData) {
+              focusOnPlanet(planetData.name);
+            }
+          }
+        }
+      }
+    }, { passive: false });
+    
+    // Prevent default touch behaviors that might interfere
+    renderer.domElement.addEventListener('touchmove', (event) => {
+      event.preventDefault();
+    }, { passive: false });
+    
+    // Handle orientation changes
+    window.addEventListener('orientationchange', () => {
+      setTimeout(() => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        
+        // Adjust control panel on orientation change
+        const controlPanel = document.getElementById('controlPanel');
+        if (window.innerWidth < 768) {
+          controlPanel.classList.add('collapsed');
+        } else {
+          controlPanel.classList.remove('collapsed');
+        }
+      }, 100);
+    });
+    
+    // Add haptic feedback for supported devices
+    const addHapticFeedback = () => {
+      if (navigator.vibrate) {
+        navigator.vibrate(50); // Short vibration
+      }
+    };
+    
+    // Add haptic feedback to planet buttons
+    planetButtons.forEach(button => {
+      button.addEventListener('touchstart', addHapticFeedback);
+    });
+    
+    // Add haptic feedback to chat buttons
+    [chatSend, chatToggle, chatMaximize, chatPrint, chatCopy].forEach(button => {
+      if (button) {
+        button.addEventListener('touchstart', addHapticFeedback);
+      }
+    });
+  }
+  
   // Responsive
   window.addEventListener('resize', () => {
     camera.aspect = window.innerWidth/window.innerHeight;
     camera.updateProjectionMatrix();
     renderer.setSize(window.innerWidth, window.innerHeight);
+    
+    // Mobile-specific resize handling
+    if (isMobile || isTouch) {
+      const controlPanel = document.getElementById('controlPanel');
+      if (window.innerWidth < 768) {
+        controlPanel.classList.add('collapsed');
+      } else {
+        controlPanel.classList.remove('collapsed');
+      }
+    }
   });
 </script>
 </body>
